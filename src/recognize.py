@@ -3,7 +3,10 @@ from sensor_msgs.msg import Image, RegionOfInterest
 from cv_bridge import CvBridge
 import face_recognition
 import numpy as np
-import cv2 
+import cv2
+import os
+import os.path
+import pickle
 
 class FaceRecognizer():
 
@@ -35,8 +38,9 @@ class FaceRecognizer():
         self.known_face_encodings = None
         self.known_face_names = None
         self.face_encodings = []
-        self.face_names = []
         self.process_this_frame = True
+
+
         self.train()
         self.mainLoop()
 
@@ -47,6 +51,19 @@ class FaceRecognizer():
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
 
+    def load_train_data(self):
+        ''' Model path, turn into a variable '''
+        with open('src/face_recognition/trained_knn_model.clf', 'rb') as f:
+            self.knn_clf = pickle.load(f)
+
+        # Recognizing bit, move away from here
+        if len(self.face_locations) == 0:
+            return []
+
+        closest_distances = self.knn_clf.kneighbors(self.face_encodings, n_neighbors=1)
+        are_matches = [closest_distances[0][i][0] <= 0.6 for i in range(len(self.face_locations))]
+
+        print([(pred, loc) if rec else ("unknown", loc) for pred, loc, rec in zip(self.knn_clf.predict(self.face_encodings), self.face_locations, are_matches)])
 
     def train(self):
         
@@ -57,23 +74,16 @@ class FaceRecognizer():
         self.known_face_encodings = [obama_face_encoding]
 
         self.known_face_names = ["Barack Obama"]
-        
+
 
     def recognize(self):
-    
-        #ret, frame = video_capture.read()
 
-        small_frame = cv2.resize(self.cv_img, (0, 0), fx=0.25, fy=0.25)
-
-        # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-        rgb_small_frame = small_frame#[:, :, ::-1]
-        
         # Find all the faces and face encodings in the current frame of video
-        face_locations = face_recognition.face_locations(rgb_small_frame)
-        face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+        self.face_locations = face_recognition.face_locations(self.cv_img)
+        self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
         face_names = []
-        for face_encoding in face_encodings:
+        for face_encoding in self.face_encodings:
             # See if the face is a match for the known face(s)
             matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
             name = "Unknown"
@@ -90,19 +100,22 @@ class FaceRecognizer():
                 name = self.known_face_names[best_match_index]
 
             face_names.append(name)
-            
-            print(face_names)
+        
+        #self.show_frame(self.face_locations)
                 
 
-        #self.process_this_frame = not self.process_this_frame
-
+    
     def mainLoop(self):
         while rospy.is_shutdown() == False:
             # Controls speed
             self.loopRate.sleep()
             if self.new_rgbImg:
                 self.new_rgbImg = False
+                
+                #identifies who and where people are
                 self.recognize()
+
+                self.load_train_data()
             
             #self.pub_marked_imgs.publish(self.msg_rgbImg)
         
