@@ -40,8 +40,8 @@ class FaceRecognizer():
         self.face_encodings = []
         self.process_this_frame = True
 
+        self.load_train_data()
 
-        self.train()
         self.mainLoop()
 
 
@@ -52,9 +52,17 @@ class FaceRecognizer():
         self.new_rgbImg = True
 
     def load_train_data(self):
+
+        
         ''' Model path, turn into a variable '''
         with open('src/face_recognition/trained_knn_model.clf', 'rb') as f:
             self.knn_clf = pickle.load(f)
+
+    
+    def recognize(self):
+
+        self.face_locations = face_recognition.face_locations(self.cv_img)
+        self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
         # Recognizing bit, move away from here
         if len(self.face_locations) == 0:
@@ -65,9 +73,9 @@ class FaceRecognizer():
 
         print([(pred, loc) if rec else ("unknown", loc) for pred, loc, rec in zip(self.knn_clf.predict(self.face_encodings), self.face_locations, are_matches)])
 
-    def train(self):
+    # Recognize people from a single photo with the subject's name
+    def train_simpler(self):
         
-        # How to create a new person
         obama_image = face_recognition.load_image_file("obama.jpeg")
         obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
@@ -76,7 +84,7 @@ class FaceRecognizer():
         self.known_face_names = ["Barack Obama"]
 
 
-    def recognize(self):
+    def recognize_simpler(self):
 
         # Find all the faces and face encodings in the current frame of video
         self.face_locations = face_recognition.face_locations(self.cv_img)
@@ -112,10 +120,7 @@ class FaceRecognizer():
             if self.new_rgbImg:
                 self.new_rgbImg = False
                 
-                #identifies who and where people are
                 self.recognize()
-
-                self.load_train_data()
             
             #self.pub_marked_imgs.publish(self.msg_rgbImg)
         
