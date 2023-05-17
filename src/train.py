@@ -12,12 +12,11 @@ import rospy
 
 class trainer:
 
-    train_dir = "src/face_recognition/faces"
-    model_save_path = 'src/face_recognition/trained_knn_model.clf'
+    train_dir = os.getenv("HOME") + "/catkin_ws/src/face_recognition/faces"
+    model_save_path = os.getenv("HOME") + "/catkin_ws/src/face_recognition/trained_knn_model.clf"
     n_neighbors = None
     knn_algo = 'ball_tree'
     verbose = False
-
 
     def __init__(self):
         """
