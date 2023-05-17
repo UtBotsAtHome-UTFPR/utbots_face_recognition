@@ -65,7 +65,7 @@ class FaceRecognizer():
         self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
         if len(self.face_locations) == 0:
-            return []
+            return 
 
         # Calculates which person is more similar to each face
         closest_distances = self.knn_clf.kneighbors(self.face_encodings, n_neighbors=1)
@@ -135,6 +135,7 @@ class FaceRecognizer():
                 self.new_rgbImg = False
                 
                 self.recognize()
+                
                 self.pub_marked_imgs.publish(self.recognized_people)
                     
             
