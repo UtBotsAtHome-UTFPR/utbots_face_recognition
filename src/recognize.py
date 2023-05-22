@@ -54,7 +54,7 @@ class FaceRecognizer():
 
     def load_train_data(self):
 
-        file_directory = os.getenv("HOME") + "/catkin_ws/src/face_recognition/trained_knn_model.clf"
+        file_directory = os.path.realpath(os.path.dirname(__file__)) + "/../trained_knn_model.clf"
 
         with open(file_directory, 'rb') as f:
             self.knn_clf = pickle.load(f)
@@ -94,13 +94,15 @@ class FaceRecognizer():
         person.id.data = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"
 
         person.parent_img = self.msg_rgbImg
+
+        print(person.id.data)
         
         return person
 
     # Recognize people from a single photo with the subject's name
     def train_simpler(self):
         
-        obama_image = face_recognition.load_image_file("obama.jpeg")
+        obama_image = face_recognition.load_image_file(os.path.realpath(os.path.dirname(__file__)) + "/../obama.jpeg")
         obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
         self.known_face_encodings = [obama_face_encoding]
@@ -126,6 +128,7 @@ class FaceRecognizer():
                 name = self.known_face_names[best_match_index]
 
             face_names.append(name)
+
     
     def mainLoop(self):
         while rospy.is_shutdown() == False:
@@ -135,7 +138,7 @@ class FaceRecognizer():
                 self.new_rgbImg = False
                 
                 self.recognize()
-                
+
                 self.pub_marked_imgs.publish(self.recognized_people)
                     
             
@@ -145,4 +148,5 @@ class FaceRecognizer():
 
 if __name__ == "__main__":
     FaceRecognizer(
+        #"/camera/rgb/image_color")
         "/usb_cam/image_raw")
