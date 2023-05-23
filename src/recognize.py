@@ -45,8 +45,6 @@ class FaceRecognizer():
 
         self.mainLoop()
 
-
-
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
@@ -148,5 +146,7 @@ class FaceRecognizer():
 
 if __name__ == "__main__":
     FaceRecognizer(
+        # Different topics for when using the webcam or the kinect camera
+
         #"/camera/rgb/image_color")
         "/usb_cam/image_raw")
