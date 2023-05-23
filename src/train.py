@@ -56,9 +56,9 @@ class Trainer:
 
         self.start_time = timeit.default_timer()
         
-        self.load_faces()
+        #self.load_faces()
 
-        self.train_data()
+        #self.train_data()
 
         self.end_time = timeit.default_timer()
 
@@ -121,8 +121,15 @@ class Trainer:
             
             face_bounding_boxes = face_recognition.face_locations(self.cv_img)
 
+            print(face_bounding_boxes[0][0])
+            print(face_bounding_boxes[0][1])
+            print(face_bounding_boxes[0][2])
+            print(face_bounding_boxes[0][3])
+
+            print(face_bounding_boxes)
+
             if len(face_bounding_boxes) == 1:
-                cv2.imwrite(path + "/" + str(i) + '.jpg', cv2.cvtColor(self.cv_img, cv2.COLOR_BGR2RGB))
+                cv2.imwrite(path + "/" + str(i) + '.jpg', cv2.cvtColor(self.cv_img[face_bounding_boxes[0][0]:face_bounding_boxes[0][2], face_bounding_boxes[0][3]:face_bounding_boxes[0][1]], cv2.COLOR_BGR2RGB))
             else:
                 i -= 1
                 print("Failed, ", end="")
@@ -160,8 +167,6 @@ class Trainer:
             self.n_neighbors = int(round(math.sqrt(len(self.face_encodings))))
             if self.verbose:
                 print("Chose n_neighbors automatically:", self.n_neighbors)
-
-        self.n_neighbors = 8
 
         # Create and train the KNN classifier
         knn_clf = neighbors.KNeighborsClassifier(n_neighbors=self.n_neighbors, algorithm=self.knn_algo, weights='distance')
