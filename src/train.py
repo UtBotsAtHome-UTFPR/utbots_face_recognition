@@ -17,7 +17,7 @@ import timeit
 
 class Trainer:
 
-    def __init__(self, new_topic_rgbImg):
+    def __init__(self, new_topic_rgbImg, k):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
         self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../trained_knn_model.clf"
@@ -43,12 +43,12 @@ class Trainer:
 
         # Eventually update verbose for making debugging easier (when it uses voice commands and so on)
         self.verbose = True # If set to True prints to the terminal when an image is unfit
-        self.should_face_crop = True # If set to true, crops the images being taken to have only a face on them
+        self.should_face_crop = False # If set to true, crops the images being taken to have only a face on them
 
 
         self.names = []
         self.face_encodings = []
-        self.n_neighbors = None
+        self.n_neighbors = k
 
         # Routine for taking and saving pictures of a subject
         path = self.picture_path_maker()
@@ -64,10 +64,12 @@ class Trainer:
 
         print(str(self.end_time - self.start_time) + " sec.")
 
+
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
+
 
     def picture_path_maker(self):
         #Take pictures from ros and save them as files for training
@@ -101,6 +103,7 @@ class Trainer:
                     name = None
         return path
     
+
     def picture_taker(self, path):
         
         i = 0
@@ -116,13 +119,11 @@ class Trainer:
             if i % 5 == 4:
                 print("Look to the right of the camera")
 
-            time.sleep(4)
+            time.sleep(3)
 
             # Take in pictures for the new person and save them
             img = self.cv_img
-            face_bounding_boxes = face_recognition.face_locations(img)
-
-            
+            face_bounding_boxes = face_recognition.face_locations(img)            
 
             if len(face_bounding_boxes) == 1:
                 if self.should_face_crop:
@@ -138,9 +139,7 @@ class Trainer:
 
         print("You're done, congratulations and thank you very much")
     
-            
 
-    
     def load_faces(self):
 
         # Loop through each person in the training set
@@ -163,12 +162,16 @@ class Trainer:
                     self.names.append(class_dir)
 
 
-    def train_data(self):
+    def train_data(self, k):
+
         # Determine how many neighbors to use for weighting in the KNN classifier
-        if self.n_neighbors is None:
+        '''if self.n_neighbors is None:
             self.n_neighbors = int(round(math.sqrt(len(self.face_encodings))))
             if self.verbose:
-                print("Chose n_neighbors automatically:", self.n_neighbors)
+                print("Chose n_neighbors automatically:", self.n_neighbors)'''
+
+        self.n_neighbors = k
+
 
         # Create and train the KNN classifier
         knn_clf = neighbors.KNeighborsClassifier(n_neighbors=self.n_neighbors, algorithm=self.knn_algo, weights='distance')
@@ -182,5 +185,5 @@ class Trainer:
 
 if __name__ == "__main__":
 
-    train = Trainer("/usb_cam/image_raw")
+    train = Trainer("/usb_cam/image_raw", 0)
     #train.train()
