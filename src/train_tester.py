@@ -10,6 +10,7 @@ class TrainTester:
         # What should the value of k be?
         # How to name the trained data
         
+        self.crop_faces = False
 
         self.k = 1
 
@@ -19,7 +20,7 @@ class TrainTester:
         self.testing_faces_path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/"
         self.all_faces_path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces_backup/"
 
-        # DO NOT PUT ALL_FACES_PATH IN THIS FUNCTION
+        # DO NOT PUT ALL_FACES_PATH AS PARAMETERS HERE
         if os.path.exists(self.testing_faces_path):
             shutil.rmtree(self.testing_faces_path)
 
@@ -32,20 +33,41 @@ class TrainTester:
         if not os.path.exists(self.all_faces_path):
             return False
         
+        os.mkdir(self.testing_faces_path)
+
+        os.mkdir(os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/trained_models/")
+
         all_people = os.listdir(self.all_faces_path)
+        
+        for n_people in range(1, len(all_people)):
+            
+            # For each possible number of images (POTENTIALLY RANDOMIZE WHICH PICTURES LATER)
+            #for num_pics in range(15):
+            if os.path.exists(self.testing_faces_path):
+                shutil.rmtree(self.testing_faces_path)
+                os.mkdir(self.testing_faces_path)
 
-        # For each possible number of images (POTENTIALLY RANDOMIZE LATER)
-        for num_pics in range(15):
 
-            for n_people in len(all_people):
+            for person_number in range(n_people + 1):
                 person = random.choice(all_people)
                 all_people.remove(person)
 
-                print(all_people, person)
+                os.mkdir(self.testing_faces_path + person)
+                for i in range(1 ,15):
+                    for j in range(i):
+                        # Take the picture inside path+"/person", crop it if needed, move it into training
+                        if self.crop_faces == True:
+                            pass
+                        else:
+                            # Load picture into faces/name
+                            shutil.copyfile(self.all_faces_path + person + "/" + str(j) + ".jpg", self.testing_faces_path + person + "/" + str(j) + ".jpg")
+                    
+                        # Run the training routine
+                    print(str(person_number) + "people and" + str(i) + "images takes :")
+                    train.Trainer("/usb_cam/image_raw", str(person_number) + "people and" + str(i) + "images")
 
-                for i in range(num_pics):
-                    # Take the picture inside path+"/person", crop it if needed, move it into training
-                    pass
+            
+            all_people = os.listdir(self.all_faces_path)
 
         return True
     

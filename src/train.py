@@ -17,10 +17,10 @@ import timeit
 
 class Trainer:
 
-    def __init__(self, new_topic_rgbImg, k):
+    def __init__(self, new_topic_rgbImg, save_name="trained_knn_model.clf"):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
-        self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../trained_knn_model.clf"
+        self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../" + save_name
         self.knn_algo = 'ball_tree'
 
         # OpenCV
@@ -48,17 +48,17 @@ class Trainer:
 
         self.names = []
         self.face_encodings = []
-        self.n_neighbors = k
+        self.n_neighbors = None
 
         # Routine for taking and saving pictures of a subject
-        path = self.picture_path_maker()
-        self.picture_taker(path)
+        #path = self.picture_path_maker()
+        #self.picture_taker(path)
 
         self.start_time = timeit.default_timer()
         
         # Routine for training, only necessary after all people have been added
-        #self.load_faces()
-        #self.train_data()
+        self.load_faces()
+        self.train_data()
 
         self.end_time = timeit.default_timer()
 
@@ -75,6 +75,7 @@ class Trainer:
         #Take pictures from ros and save them as files for training
         name = None
         path = None
+        
         while(not name):
             name = input("Type in you name: ")
 
@@ -162,15 +163,15 @@ class Trainer:
                     self.names.append(class_dir)
 
 
-    def train_data(self, k):
+    def train_data(self):
 
         # Determine how many neighbors to use for weighting in the KNN classifier
-        '''if self.n_neighbors is None:
+        if self.n_neighbors is None:
             self.n_neighbors = int(round(math.sqrt(len(self.face_encodings))))
             if self.verbose:
-                print("Chose n_neighbors automatically:", self.n_neighbors)'''
+                print("Chose n_neighbors automatically:", self.n_neighbors)
 
-        self.n_neighbors = k
+        #self.n_neighbors = k
 
 
         # Create and train the KNN classifier
@@ -185,5 +186,5 @@ class Trainer:
 
 if __name__ == "__main__":
 
-    train = Trainer("/usb_cam/image_raw", 0)
+    train = Trainer("/usb_cam/image_raw")
     #train.train()
