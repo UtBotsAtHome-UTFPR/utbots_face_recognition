@@ -35,7 +35,9 @@ class TrainTester:
         
         os.mkdir(self.testing_faces_path)
 
-        os.mkdir(os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/trained_models/")
+        # Trained models path
+        if not os.path.exists(os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/trained_models/"):
+            os.mkdir(os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/trained_models/")
 
         all_people = os.listdir(self.all_faces_path)
         
@@ -47,10 +49,14 @@ class TrainTester:
                 shutil.rmtree(self.testing_faces_path)
                 os.mkdir(self.testing_faces_path)
 
-
+            people = []
+            
+            # Pode estar rerrodando código
             for person_number in range(n_people + 1):
-                person = random.choice(all_people)
-                all_people.remove(person)
+                people.append(random.choice(all_people))
+                all_people.remove(people[-1])
+
+            for person in people:
 
                 os.mkdir(self.testing_faces_path + person)
                 for i in range(1 ,15):
@@ -62,9 +68,9 @@ class TrainTester:
                             # Load picture into faces/name
                             shutil.copyfile(self.all_faces_path + person + "/" + str(j) + ".jpg", self.testing_faces_path + person + "/" + str(j) + ".jpg")
                     
-                        # Run the training routine
-                    print(str(person_number) + "people and" + str(i) + "images takes :")
-                    train.Trainer("/usb_cam/image_raw", str(person_number) + "people and" + str(i) + "images")
+                    # Run the training routine
+                    print(str(len(person)) + " people and " + str(i) + " images takes :")
+                    train.Trainer("/usb_cam/image_raw", str(person_number) + "people_and" + str(i + 1) + "images_no_crop")
 
             
             all_people = os.listdir(self.all_faces_path)

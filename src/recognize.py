@@ -7,6 +7,7 @@ import os
 import os.path
 import pickle
 from vision_msgs.msg import Object, ObjectArray
+import cv2
 
 class FaceRecognizer():
 
@@ -23,10 +24,12 @@ class FaceRecognizer():
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
 
         # Publisher
-        self.pub_marked_imgs = rospy.Publisher("/utbots/vision/faces/image", ObjectArray, queue_size=1)
+        self.pub_marked_people = rospy.Publisher("/utbots/vision/faces/recognized", ObjectArray, queue_size=1)
+        self.pub_marked_imgs = rospy.Publisher("/utbots/vision/faces/image", Image, queue_size=1)
 
         # Publisher variables
         self.recognized_people = ObjectArray()
+        self.marked_img = Image()
 
         # ROS node
         rospy.init_node('face_recognizer', anonymous=True)
@@ -75,6 +78,20 @@ class FaceRecognizer():
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
 
 
+    def draw_rec_on_faces(self, name, top, bottom, left, right):
+        img = self.cv_img
+
+        # Draw a box around the face
+        cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
+
+        # Draw a label with a name below the face
+        cv2.rectangle(img, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(img, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+
+        return img
+
+
     def person_setter(self, i, is_match):
         person = Object()
 
@@ -91,7 +108,9 @@ class FaceRecognizer():
 
         person.id.data = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"
 
-        person.parent_img = self.msg_rgbImg
+        new_cv_img = self.draw_rec_on_faces(person.id.data, bbox.y_offset, bbox.y_offset + bbox.height, bbox.x_offset, bbox.x_offset + bbox.width)
+
+        person.parent_img = self.marked_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(new_cv_img, cv2.COLOR_BGR2RGB), encoding="passthrough")
 
         print(person.id.data)
         
@@ -137,7 +156,8 @@ class FaceRecognizer():
                 
                 self.recognize()
 
-                self.pub_marked_imgs.publish(self.recognized_people)
+                self.pub_marked_imgs.publish(self.marked_img)
+                self.pub_marked_people.publish(self.recognized_people)
                     
             
         

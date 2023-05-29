@@ -20,7 +20,7 @@ class Trainer:
     def __init__(self, new_topic_rgbImg, save_name="trained_knn_model.clf"):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
-        self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../" + save_name
+        self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../trained_models/" + save_name
         self.knn_algo = 'ball_tree'
 
         # OpenCV
