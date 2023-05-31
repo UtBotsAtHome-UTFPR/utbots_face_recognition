@@ -56,9 +56,10 @@ class FaceRecognizer():
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
 
+    # Loads the knn trainer into the program
     def load_train_data(self):
 
-        file_directory = os.path.realpath(os.path.dirname(__file__)) + "/../trained_knn_model.clf"
+        file_directory = os.path.realpath(os.path.dirname(__file__)) + "/../trained_models/trained_knn_model.clf"
 
         with open(file_directory, 'rb') as f:
             self.knn_clf = pickle.load(f)
@@ -75,16 +76,24 @@ class FaceRecognizer():
         closest_distances = self.knn_clf.kneighbors(self.face_encodings, n_neighbors=1)
         are_matches = [closest_distances[0][i][0] <= 0.6 for i in range(len(self.face_locations))]
   
-        # Adds each person in the image to recognized_people
         self.recognized_people = ObjectArray()
 
+        # Adds each person in the image to recognized_people and alters img to show them
         self.edited_image = self.cv_img
         for i in range(len(are_matches)):
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
         self.pub_image = self.edited_image
 
-    def draw_rec_on_faces(self, name, top, bottom, left, right):
+        print()
+
+    
+    def draw_rec_on_faces(self, name, coordinates):
         img = self.edited_image
+
+        top = coordinates[0]
+        bottom = coordinates[1]
+        left = coordinates[2]
+        right = coordinates[3]
 
         # Draw a box around the face
         cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
@@ -93,8 +102,6 @@ class FaceRecognizer():
         cv2.rectangle(img, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(img, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-
-        return img
 
 
     def person_setter(self, i, is_match):
@@ -113,10 +120,14 @@ class FaceRecognizer():
 
         person.id.data = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"
 
-        new_cv_img = self.draw_rec_on_faces(person.id.data, bbox.y_offset, bbox.y_offset + bbox.height, bbox.x_offset, bbox.x_offset + bbox.width)
+        # Coordinates of the face in top, bottom, left, right order
+        coordinates = [bbox.y_offset, bbox.y_offset + bbox.height, bbox.x_offset, bbox.x_offset + bbox.width]
 
-        person.parent_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(new_cv_img, cv2.COLOR_BGR2RGB), encoding="passthrough")
+        self.draw_rec_on_faces(person.id.data, coordinates)
 
+        person.parent_img.data = self.msg_rgbImg
+
+        # Shows who has been found on the terminal window
         print(person.id.data)
         
         return person
