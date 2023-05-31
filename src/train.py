@@ -161,6 +161,9 @@ class Trainer:
                     # Add face encoding for current image to the training set
                     self.face_encodings.append(face_recognition.face_encodings(image, known_face_locations=face_bounding_boxes)[0])
                     self.names.append(class_dir)
+            
+            if self.verbose:
+                print("Images have been loaded")
 
 
     def train_data(self):

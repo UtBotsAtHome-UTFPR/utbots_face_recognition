@@ -43,6 +43,9 @@ class FaceRecognizer():
         self.face_encodings = []
         self.process_this_frame = True
 
+        # Image that shows recognition
+        self.edited_image = None
+        self.pub_image = None
         
         self.load_train_data()
 
@@ -74,12 +77,14 @@ class FaceRecognizer():
   
         # Adds each person in the image to recognized_people
         self.recognized_people = ObjectArray()
+
+        self.edited_image = self.cv_img
         for i in range(len(are_matches)):
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
-
+        self.pub_image = self.edited_image
 
     def draw_rec_on_faces(self, name, top, bottom, left, right):
-        img = self.cv_img
+        img = self.edited_image
 
         # Draw a box around the face
         cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
@@ -110,7 +115,7 @@ class FaceRecognizer():
 
         new_cv_img = self.draw_rec_on_faces(person.id.data, bbox.y_offset, bbox.y_offset + bbox.height, bbox.x_offset, bbox.x_offset + bbox.width)
 
-        person.parent_img = self.marked_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(new_cv_img, cv2.COLOR_BGR2RGB), encoding="passthrough")
+        person.parent_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(new_cv_img, cv2.COLOR_BGR2RGB), encoding="passthrough")
 
         print(person.id.data)
         
@@ -156,7 +161,7 @@ class FaceRecognizer():
                 
                 self.recognize()
 
-                self.pub_marked_imgs.publish(self.marked_img)
+                self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
                 self.pub_marked_people.publish(self.recognized_people)
                     
             
