@@ -26,6 +26,7 @@ class FaceRecognizer():
         # Publisher
         self.pub_marked_people = rospy.Publisher("/utbots/vision/faces/recognized", ObjectArray, queue_size=1)
         self.pub_marked_imgs = rospy.Publisher("/utbots/vision/faces/image", Image, queue_size=1)
+        self.new_img= False
 
         # Publisher variables
         self.recognized_people = ObjectArray()
@@ -83,6 +84,7 @@ class FaceRecognizer():
         for i in range(len(are_matches)):
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
         self.pub_image = self.edited_image
+        self.new_img = True
 
         print()
 
@@ -173,8 +175,9 @@ class FaceRecognizer():
                 self.recognize()
 
                 self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
-                self.pub_marked_people.publish(self.recognized_people)
-                    
+                if self.new_img:
+                    self.pub_marked_people.publish(self.recognized_people)
+                    self.new_img = False
             
         
 
