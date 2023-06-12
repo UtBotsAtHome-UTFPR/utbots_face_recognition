@@ -14,7 +14,7 @@ import timeit
 
 class Trainer:
 
-    def __init__(self, new_topic_rgbImg, save_name="trained_knn_model.clf"):
+    def __init__(self, new_topic_rgbImg, save_name="trained_knn_model.clf", n: int=None, face_crop: bool=False):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
         self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../trained_models/" + save_name
@@ -38,12 +38,12 @@ class Trainer:
 
         # Eventually update verbose for making debugging easier (when it uses voice commands and so on)
         self.verbose = True # If set to True prints to the terminal when an image is unfit
-        self.should_face_crop = False # If set to true, crops the images being taken to have only a face on them
+        self.should_face_crop = face_crop # If set to true, crops the images being taken to have only a face on them
 
         # Algorithm variables
         self.names = []
         self.face_encodings = []
-        self.n_neighbors = None
+        self.n_neighbors = n
 
         self.start_time = timeit.default_timer()
         

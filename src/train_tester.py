@@ -2,6 +2,8 @@ import os
 import train
 import shutil
 import random
+import timeit
+import csv
 
 class TrainTester:
 
@@ -16,7 +18,11 @@ class TrainTester:
 
         self.people_amount = 0
 
-        
+        self.people_used = []
+        self.images_used = []
+        self.duration_used = []
+        self.neighbors_used = []
+
         self.testing_faces_path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/"
         self.all_faces_path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces_backup/"
 
@@ -25,6 +31,14 @@ class TrainTester:
             shutil.rmtree(self.testing_faces_path)
 
         self.load_images()
+
+        with open('profiles1.csv', 'w', newline='') as file:
+            self.writer = csv.writer(file)
+            fields = ["people", "images", "n_neighbors", "duration"]
+            self.writer.writerow(fields)
+            for i in range(len(self.people_used)):
+                self.writer.writerow([str(self.people_used[i]), str(self.images_used[i]), str(self.neighbors_used[i]), str(self.duration_used[i])])
+
 
     
     
@@ -40,6 +54,7 @@ class TrainTester:
             os.mkdir(os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/trained_models/")
 
         all_people = os.listdir(self.all_faces_path)
+        print(all_people)
 
         people = []
         for n_people in range(1, len(all_people) + 1):
@@ -59,73 +74,35 @@ class TrainTester:
                     # Copy images to people
                     for i in range(0, n_imgs):
                         shutil.copyfile(self.all_faces_path + person + "/" + str(i) + ".jpg", self.testing_faces_path + person + "/" + str(i) + ".jpg")
+                        
 
-                
-
-                
-                # Train
-                #print(people)
-                #print(len(os.listdir(self.testing_faces_path + people[-1])))
                 print()
+
+                
+
                 print(str(len(people)) + " people and " + str(n_imgs) + " images takes :\t\t" + str(len(people)))
-                train.Trainer("/usb_cam/image_raw", str(len(people)) + "people_and" + str(n_imgs) + "images_no_crop")
+                
 
-            '''if os.path.exists(self.testing_faces_path):
-                shutil.rmtree(self.testing_faces_path)
-                os.mkdir(self.testing_faces_path)
+                for n in range(1, 10):
 
-            people.append(random.choice(all_people))
-            all_people.remove(people[-1])
-            
-            for person in people:
-                os.mkdir(self.testing_faces_path + person)
-                for n_images in range(1, len(os.listdir(self.all_faces_path + person))):
+                    # Does the training without cropping images
+                    self.start_time = timeit.default_timer()
+
+                    save_path = str(len(people)) + "people_and" + str(n_imgs) + "images" + str(n) + "neighbors" + "no_crop" 
+                    train.Trainer("/usb_cam/image_raw", save_path, n, False)
                     
-                    for i in range(n_images):
-                        shutil.copyfile(self.all_faces_path + person + "/" + str(i) + ".jpg", self.testing_faces_path + person + "/" + str(i) + ".jpg")
+                    duration = timeit.default_timer() - self.start_time
 
-            # Para cada imagem que é adicionada
-                    print(people)
-                    print(len(os.listdir(self.testing_faces_path + person)))'''
-        
-        '''for n_people in range(1, len(all_people)):
-            
-            # For each possible number of images (POTENTIALLY RANDOMIZE WHICH PICTURES LATER)
-            #for num_pics in range(15):
-            if os.path.exists(self.testing_faces_path):
-                shutil.rmtree(self.testing_faces_path)
-                os.mkdir(self.testing_faces_path)
+                    self.people_used.append(len(people))
+                    self.images_used.append(n_imgs)
+                    self.duration_used.append(duration)
+                    self.neighbors_used.append(n)
 
-            people = []
-            all_people = os.listdir(self.all_faces_path)
-
-            # Pode estar rerrodando código
-            for person_number in range(n_people):
-                people.append(random.choice(all_people))
-                all_people.remove(people[-1])
-
-            for person in people:
-
-                os.mkdir(self.testing_faces_path + person)
-                for i in range(1 ,15):
-                    for j in range(i):
-                        # Take the picture inside path+"/person", crop it if needed, move it into training
-                        if self.crop_faces == True:
-                            pass
-                        else:
-                            # Load picture into faces/name
-                            shutil.copyfile(self.all_faces_path + person + "/" + str(j) + ".jpg", self.testing_faces_path + person + "/" + str(j) + ".jpg")
-                    
-                    # Run the training routine
-                    print()
-                    print(str(len(people)) + " people and " + str(i) + " images takes :\t\t" + str(len(people)))
-                    train.Trainer("/usb_cam/image_raw", str(len(people)) + "people_and" + str(i + 1) + "images_no_crop")
-
-            
-            all_people = os.listdir(self.all_faces_path)'''
 
         return True
     
+def add_to_csv():
+    pass
     
     
     # Function to load different numbers of images into the named folder

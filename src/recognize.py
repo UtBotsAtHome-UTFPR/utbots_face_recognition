@@ -174,9 +174,11 @@ class FaceRecognizer():
                 
                 self.recognize()
 
-                self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
+                self.pub_marked_people.publish(self.recognized_people)
+                                
                 if self.new_img:
-                    self.pub_marked_people.publish(self.recognized_people)
+                    self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
+                    
                     self.new_img = False
             
         
