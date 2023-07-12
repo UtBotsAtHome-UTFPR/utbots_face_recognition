@@ -50,7 +50,7 @@ class PictureTaker:
         path = None
         
         while(not name):
-            name = input("Type in you name: ")
+            name = input("Type in your name: ")
 
             path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
             print(path)
