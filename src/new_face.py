@@ -23,8 +23,9 @@ class PictureTaker:
         # Publisher
         self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
 
-        # Subscriber
+        # Subscribers
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
+        self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
 
         # ROS node
         rospy.init_node('face_recognizer_new_person', anonymous=True)
@@ -43,6 +44,9 @@ class PictureTaker:
         self.names = []
         self.face_encodings = []
         self.n_neighbors = None
+
+    def callback_doneTalking(self, msg):
+        self.done_talking = msg
 
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
@@ -67,7 +71,7 @@ class PictureTaker:
                 
                 os.makedirs(path)
                 rospy.loginfo("New person is ready for training")
-                self.pub_instructions("Your file is ready for training. Let's begin")
+                self.pub_instructions.publish("Your file is ready for training. Let's begin")
 
             else:
                 rospy.loginfo("Do you want to replace the user by that name?: [Y/n] ")
@@ -94,7 +98,7 @@ class PictureTaker:
                         exit(1)
 
         rospy.loginfo("Created path for saving images")
-        rospy.loginfo("Ok. Let's begin")
+        self.pub_instructions.publish("Ok. Let's begin")
         return path
     
     # Control for telling the user what to do for taking pictures
@@ -104,17 +108,20 @@ class PictureTaker:
 
 
         if i % 5 == 0:
-            print("Look directly into the camera")
+            message = "Tilt your head directly into the camera"
         if i % 5 == 1:
-            print("Look upwards")
+            message = "Tilt your head upwards"
         if i % 5 == 2:
-            print("Look downwards")
+            message = "Tilt your head downwards"
         if i % 5 == 3:
-            print("Look to the left of the camera")
+            message = "Tilt your head to the left of the camera"
         if i % 5 == 4:
-            print("Look to the right of the camera")
+            message = "Tilt your head to the right of the camera"
 
-        time.sleep(3)
+        rospy.loginfo(message)
+        self.pub_instructions.publish(message)
+
+        time.sleep(4)
 
     def picture_taker(self, path):
         
@@ -136,11 +143,13 @@ class PictureTaker:
 
             else:
                 i -= 1
-                print("Failed, ", end="")
+                rospy.loginfo("image has 1 or more people")
+                self.pub_instructions("Keep looking that way, we couldn't find you")
 
             i += 1
 
-        print("You're done, congratulations and thank you very much")
+        rospy.loginfo("Training complete")
+        self.pub_instructions.publish("You're done, congratulations and thank you very much")
 
 def main():
     
