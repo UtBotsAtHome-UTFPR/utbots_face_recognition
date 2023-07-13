@@ -4,10 +4,12 @@ import face_recognition
 from face_recognition.face_recognition_cli import image_files_in_folder
 import rospy
 from sensor_msgs.msg import Image
+from std_msgs.msg import String
 import cv2
 from cv_bridge import CvBridge
 import shutil
 import time
+import rosnode
 
 class PictureTaker:
     def __init__(self, new_topic_rgbImg):
@@ -18,12 +20,16 @@ class PictureTaker:
         self.cv_img = None           # CvImage
         self.bridge = CvBridge()
 
+        # Publisher
+        self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
+
         # Subscriber
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
 
         # ROS node
         rospy.init_node('face_recognizer_new_person', anonymous=True)
         
+        self.pub_instructions.publish("I will give you instructions for face recognition by using my tiny winy little voice")
         # Time
         self.loopRate = rospy.Rate(30)
 
@@ -38,7 +44,6 @@ class PictureTaker:
         self.face_encodings = []
         self.n_neighbors = None
 
-
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
@@ -50,38 +55,53 @@ class PictureTaker:
         path = None
         
         while(not name):
-            name = input("Type in your name: ")
+            self.pub_instructions.publish("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name")
+            rospy.loginfo("Type in your name: ")
+            name = input()
 
             path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
-            print(path)
+
+            rospy.loginfo(path)
             # Check whether the specified path exists or not
             if not os.path.exists(path):
                 
                 os.makedirs(path)
-                print("New person is ready for training")
+                rospy.loginfo("New person is ready for training")
+                self.pub_instructions("Your file is ready for training. Let's begin")
 
             else:
-                delete = input("Do you want to replace the user by that name?: [Y/n] ")
+                rospy.loginfo("Do you want to replace the user by that name?: [Y/n] ")
+                self.pub_instructions.publish("Unfortunately, it appears someone who goes by this name is already inside the database, would you like to override them? Type in y to confirm or n to choose another name")
+                delete = input()
                 if delete == 'y' or delete == 'Y':
                     try:
                         shutil.rmtree(path)
-                        print("directory is removed successfully")
+                        rospy.loginfo("directory was removed successfully")
+                        self.pub_instructions.publish("Their directory was removed, let's begin")
                         os.makedirs(path)
 
                     # Ends function if directory can't be removed
                     except OSError as x:
-                        print("Error occured: %s : %s" % (path, x.strerror))
+                        rospy.logerr("Error occured: %s : %s" % (path, x.strerror))
                         return 
 
                 else:
                     name = None
-                    close = input("Do you wish to exit ?: [Y/n] ")
+                    rospy.loginfo("Do you wish to exit ?: [Y/n] ")
+                    self.pub_instructions.publish("In this case, do you wish to exit? Press y to exit or n to try again")
+                    close = input()
                     if close == "y" or input == "Y":
                         exit(1)
+
+        rospy.loginfo("Created path for saving images")
+        rospy.loginfo("Ok. Let's begin")
         return path
     
     # Control for telling the user what to do for taking pictures
     def pic_instructions(self, i):
+
+        # Turn all of these prints into tts
+
 
         if i % 5 == 0:
             print("Look directly into the camera")

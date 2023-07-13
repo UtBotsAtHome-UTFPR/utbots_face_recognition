@@ -47,9 +47,10 @@ class FaceRecognizer():
         # Image that shows recognition
         self.edited_image = None
         self.pub_image = None
-        
+        rospy.loginfo("loading train data")
         self.load_train_data()
 
+        rospy.loginfo("Starting recognition system")
         self.mainLoop()
 
     def callback_rgbImg(self, msg):
@@ -79,6 +80,7 @@ class FaceRecognizer():
   
         self.recognized_people = ObjectArray()
 
+        rospy.loginfo("Recognized people are: ")
         # Adds each person in the image to recognized_people and alters img to show them
         self.edited_image = self.cv_img
         for i in range(len(are_matches)):
@@ -86,7 +88,7 @@ class FaceRecognizer():
         self.pub_image = self.edited_image
         self.new_img = True
 
-        print()
+        
 
     
     def draw_rec_on_faces(self, name, coordinates):
@@ -130,7 +132,7 @@ class FaceRecognizer():
         person.parent_img.data = self.msg_rgbImg
 
         # Shows who has been found on the terminal window
-        print(person.id.data)
+        rospy.loginfo(person.id.data)
         
         return person
 
