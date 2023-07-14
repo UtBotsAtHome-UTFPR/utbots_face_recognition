@@ -29,7 +29,6 @@ class PictureTaker:
 
         # Subscriber variable 
         self.done_talking = String("yes")
-        print(self.done_talking)
 
         # ROS node
         rospy.init_node('face_recognizer_new_person', anonymous=True)
@@ -55,13 +54,6 @@ class PictureTaker:
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
-
-    def wait_for_audio(self):
-                
-        while(self.done_talking.data == "no"):
-            pass
-
-        return
 
     def picture_path_maker(self):
 
@@ -114,11 +106,14 @@ class PictureTaker:
 
         return path
     
-    def tts_publisher(self, speak, log):
-        self.wait_for_audio()
-        rospy.loginfo(log)
+    def tts_publisher(self, speak, log="empty"):
+        while(self.done_talking.data == "no"):
+            pass
+        if(log != "empty"):
+            rospy.loginfo(log)
+        else:
+            rospy.loginfo(speak)
         self.pub_instructions.publish(speak)
-
 
     # Control for telling the user what to do for taking pictures
     def pic_instructions(self, i, speak):
