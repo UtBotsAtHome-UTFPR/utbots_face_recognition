@@ -27,10 +27,13 @@ class PictureTaker:
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
 
+        # Subscriber variable 
+        self.done_talking = String("yes")
+        print(self.done_talking)
+
         # ROS node
         rospy.init_node('face_recognizer_new_person', anonymous=True)
         
-        self.pub_instructions.publish("I will give you instructions for face recognition by using my tiny winy little voice")
         # Time
         self.loopRate = rospy.Rate(30)
 
@@ -53,14 +56,26 @@ class PictureTaker:
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
 
+    def wait_for_audio(self):
+                
+        while(self.done_talking.data == "no"):
+            pass
+
+        return
+
     def picture_path_maker(self):
 
         name = None
         path = None
         
         while(not name):
-            self.pub_instructions.publish("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name")
-            rospy.loginfo("Type in your name: ")
+
+            self.tts_publisher("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name", "Type in your name: ")
+            
+            #self.wait_for_audio()
+            #rospy.loginfo("Type in your name: ")
+            #self.pub_instructions.publish("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name")
+
             name = input()
 
             path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
@@ -70,18 +85,31 @@ class PictureTaker:
             if not os.path.exists(path):
                 
                 os.makedirs(path)
-                rospy.loginfo("New person is ready for training")
-                self.pub_instructions.publish("Your file is ready for training. Let's begin")
+                
+                self.tts_publisher("Your file is ready for training. Let's begin", "New person is ready for training")
+
+                #self.wait_for_audio()
+                #rospy.loginfo("New person is ready for training")
+                #self.pub_instructions.publish("Your file is ready for training. Let's begin")
 
             else:
-                rospy.loginfo("Do you want to replace the user by that name?: [Y/n] ")
-                self.pub_instructions.publish("Unfortunately, it appears someone who goes by this name is already inside the database, would you like to override them? Type in y to confirm or n to choose another name")
+                self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
+
+                #self.wait_for_audio()
+                #rospy.loginfo("Do you want to replace the user by that name?: [Y/n] ")
+                #self.pub_instructions.publish("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name")
+                
                 delete = input()
                 if delete == 'y' or delete == 'Y':
                     try:
                         shutil.rmtree(path)
-                        rospy.loginfo("directory was removed successfully")
-                        self.pub_instructions.publish("Their directory was removed, let's begin")
+
+                        self.tts_publisher("Their directory was removed, let's begin", "directory was removed successfully")
+                        
+                        #self.wait_for_audio()
+                        #rospy.loginfo("directory was removed successfully")
+                        #self.pub_instructions.publish("Their directory was removed, let's begin")
+
                         os.makedirs(path)
 
                     # Ends function if directory can't be removed
@@ -91,21 +119,32 @@ class PictureTaker:
 
                 else:
                     name = None
-                    rospy.loginfo("Do you wish to exit ?: [Y/n] ")
-                    self.pub_instructions.publish("In this case, do you wish to exit? Press y to exit or n to try again")
+
+                    self.tts_publisher("In this case, do you wish to exit? Press y to exit or n to try again", "Do you wish to exit ?: [Y/n] ")
+                    
+                    #self.wait_for_audio()
+                    #rospy.loginfo("Do you wish to exit ?: [Y/n] ")
+                    #self.pub_instructions.publish("In this case, do you wish to exit? Press y to exit or n to try again")
+
                     close = input()
                     if close == "y" or input == "Y":
                         exit(1)
 
-        rospy.loginfo("Created path for saving images")
-        self.pub_instructions.publish("Ok. Let's begin")
+        self.tts_publisher("Ok. Let's begin", "Created path for saving images")
+        #self.wait_for_audio()
+        #rospy.loginfo("Created path for saving images")
+        #self.pub_instructions.publish("Ok. Let's begin")
+
         return path
     
+    def tts_publisher(self, speak, log):
+        self.wait_for_audio()
+        rospy.loginfo(log)
+        self.pub_instructions.publish(speak)
+
+
     # Control for telling the user what to do for taking pictures
-    def pic_instructions(self, i):
-
-        # Turn all of these prints into tts
-
+    def pic_instructions(self, i, speak):
 
         if i % 5 == 0:
             message = "Tilt your head directly into the camera"
@@ -118,17 +157,18 @@ class PictureTaker:
         if i % 5 == 4:
             message = "Tilt your head to the right of the camera"
 
-        rospy.loginfo(message)
-        self.pub_instructions.publish(message)
+        if(speak):
+            self.tts_publisher(message, message)
 
-        time.sleep(4)
+        time.sleep(2)
 
     def picture_taker(self, path):
         
         i = 0
+        speak = True
         while(i < self.pic_quantity):
-
-            self.pic_instructions(i)
+            
+            self.pic_instructions(i, speak)
 
             # Take in pictures for the new person and save them
             img = self.cv_img
@@ -140,16 +180,23 @@ class PictureTaker:
                     cv2.imwrite(path + "/" + str(i) + '.jpg', cv2.cvtColor(img[face_bounding_boxes[0][0]:face_bounding_boxes[0][2], face_bounding_boxes[0][3]:face_bounding_boxes[0][1]], cv2.COLOR_BGR2RGB))
                 else:
                     cv2.imwrite(path + "/" + str(i) + '.jpg', cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+                speak = True
 
             else:
                 i -= 1
-                rospy.loginfo("image has 1 or more people")
-                self.pub_instructions("Keep looking that way, we couldn't find you")
-
+                
+                self.tts_publisher("Keep looking that way, we couldn't find you", "image has noone or over 2 people")
+                
+                #rospy.loginfo("image has noone or over 2 people")
+                #self.pub_instructions.publish("Keep looking that way, we couldn't find you")
+                
+                speak = False
             i += 1
 
-        rospy.loginfo("Training complete")
-        self.pub_instructions.publish("You're done, congratulations and thank you very much")
+        self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
+        
+        #rospy.loginfo("Training complete")
+        #self.pub_instructions.publish("You're done, congratulations and thank you very much")
 
 def main():
     
