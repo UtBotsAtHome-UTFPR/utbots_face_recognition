@@ -41,7 +41,7 @@ class PictureTaker:
 
         # Eventually update verbose for making debugging easier (when it uses voice commands and so on)
         self.verbose = True # If set to True prints to the terminal when an image is unfit
-        self.should_face_crop = False # If set to true, crops the images being taken to have only a face on them
+        self.should_face_crop = True # If set to True, crops the images being taken to have only a face on them
 
         # Algorithm variables
         self.names = []
