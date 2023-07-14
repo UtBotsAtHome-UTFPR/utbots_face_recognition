@@ -71,10 +71,6 @@ class PictureTaker:
         while(not name):
 
             self.tts_publisher("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name", "Type in your name: ")
-            
-            #self.wait_for_audio()
-            #rospy.loginfo("Type in your name: ")
-            #self.pub_instructions.publish("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name")
 
             name = input()
 
@@ -88,16 +84,8 @@ class PictureTaker:
                 
                 self.tts_publisher("Your file is ready for training. Let's begin", "New person is ready for training")
 
-                #self.wait_for_audio()
-                #rospy.loginfo("New person is ready for training")
-                #self.pub_instructions.publish("Your file is ready for training. Let's begin")
-
             else:
                 self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
-
-                #self.wait_for_audio()
-                #rospy.loginfo("Do you want to replace the user by that name?: [Y/n] ")
-                #self.pub_instructions.publish("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name")
                 
                 delete = input()
                 if delete == 'y' or delete == 'Y':
@@ -105,10 +93,6 @@ class PictureTaker:
                         shutil.rmtree(path)
 
                         self.tts_publisher("Their directory was removed, let's begin", "directory was removed successfully")
-                        
-                        #self.wait_for_audio()
-                        #rospy.loginfo("directory was removed successfully")
-                        #self.pub_instructions.publish("Their directory was removed, let's begin")
 
                         os.makedirs(path)
 
@@ -121,19 +105,12 @@ class PictureTaker:
                     name = None
 
                     self.tts_publisher("In this case, do you wish to exit? Press y to exit or n to try again", "Do you wish to exit ?: [Y/n] ")
-                    
-                    #self.wait_for_audio()
-                    #rospy.loginfo("Do you wish to exit ?: [Y/n] ")
-                    #self.pub_instructions.publish("In this case, do you wish to exit? Press y to exit or n to try again")
 
                     close = input()
                     if close == "y" or input == "Y":
                         exit(1)
 
         self.tts_publisher("Ok. Let's begin", "Created path for saving images")
-        #self.wait_for_audio()
-        #rospy.loginfo("Created path for saving images")
-        #self.pub_instructions.publish("Ok. Let's begin")
 
         return path
     
@@ -187,16 +164,10 @@ class PictureTaker:
                 
                 self.tts_publisher("Keep looking that way, we couldn't find you", "image has noone or over 2 people")
                 
-                #rospy.loginfo("image has noone or over 2 people")
-                #self.pub_instructions.publish("Keep looking that way, we couldn't find you")
-                
                 speak = False
             i += 1
 
         self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
-        
-        #rospy.loginfo("Training complete")
-        #self.pub_instructions.publish("You're done, congratulations and thank you very much")
 
 def main():
     
