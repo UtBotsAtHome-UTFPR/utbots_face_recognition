@@ -9,7 +9,8 @@ import cv2
 from cv_bridge import CvBridge
 import shutil
 import time
-import rosnode
+
+# Add capability to search for a person by walking around the room, or at least looking around
 
 class PictureTaker:
     def __init__(self, new_topic_rgbImg):
@@ -74,7 +75,7 @@ class PictureTaker:
                 
                 os.makedirs(path)
                 
-                self.tts_publisher("Your file is ready for training. Let's begin", "New person is ready for training")
+                self.tts_publisher("Your file is ready for training", "New person is ready for training")
 
             else:
                 self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
@@ -84,7 +85,7 @@ class PictureTaker:
                     try:
                         shutil.rmtree(path)
 
-                        self.tts_publisher("Their directory was removed, let's begin", "directory was removed successfully")
+                        self.tts_publisher("Their directory was removed", "directory was removed successfully")
 
                         os.makedirs(path)
 
@@ -106,14 +107,20 @@ class PictureTaker:
 
         return path
     
+    # tts = text to speach
     def tts_publisher(self, speak, log="empty"):
         while(self.done_talking.data == "no"):
             pass
+
         if(log != "empty"):
             rospy.loginfo(log)
         else:
             rospy.loginfo(speak)
         self.pub_instructions.publish(speak)
+        
+        time.sleep(0.2)
+        while(self.done_talking.data == "no"):
+            pass
 
     # Control for telling the user what to do for taking pictures
     def pic_instructions(self, i, speak):
@@ -130,9 +137,9 @@ class PictureTaker:
             message = "Tilt your head to the right of the camera"
 
         if(speak):
-            self.tts_publisher(message, message)
+            self.tts_publisher(message)
 
-        time.sleep(2)
+        time.sleep(1)
 
     def picture_taker(self, path):
         
