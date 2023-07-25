@@ -1,4 +1,7 @@
+#!/usr/bin/python3
+
 import rospy
+from std_msgs.msg import Bool
 from sensor_msgs.msg import Image, RegionOfInterest
 from cv_bridge import CvBridge
 import face_recognition
@@ -20,7 +23,12 @@ class FaceRecognizer():
         # Flags
         self.new_rgbImg = False
 
+        # Messages
+        self.msg_enable = Bool()
+        self.msg_enable.data = False
+
         # Subscriber
+        self.sub_enable = rospy.Subscriber("/utbots/vision/faces/enable", Bool, self.callback_enable)
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
 
         # Publisher
@@ -47,16 +55,16 @@ class FaceRecognizer():
         # Image that shows recognition
         self.edited_image = None
         self.pub_image = None
-        rospy.loginfo("loading train data")
-        self.load_train_data()
 
-        rospy.loginfo("Starting recognition system")
         self.mainLoop()
 
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
+
+    def callback_enable(self, msg):
+        self.msg_enable = msg
 
     # Loads the knn trainer into the program
     def load_train_data(self):
@@ -80,16 +88,13 @@ class FaceRecognizer():
   
         self.recognized_people = ObjectArray()
 
-        rospy.loginfo("Recognized people are: ")
+        rospy.loginfo("[RECOGNIZE] Recognized people are: ")
         # Adds each person in the image to recognized_people and alters img to show them
         self.edited_image = self.cv_img
         for i in range(len(are_matches)):
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
         self.pub_image = self.edited_image
         self.new_img = True
-
-        
-
     
     def draw_rec_on_faces(self, name, coordinates):
         img = self.edited_image
@@ -132,7 +137,7 @@ class FaceRecognizer():
         person.parent_img.data = self.msg_rgbImg
 
         # Shows who has been found on the terminal window
-        rospy.loginfo(person.id.data)
+        rospy.loginfo("[RECOGNIZE] " + person.id.data)
         
         return person
 
@@ -165,14 +170,19 @@ class FaceRecognizer():
                 name = self.known_face_names[best_match_index]
 
             face_names.append(name)
-
     
     def mainLoop(self):
+        rospy.loginfo("[RECOGNIZE] loading train data")
+        self.load_train_data()
+
+        rospy.loginfo("[RECOGNIZE] Starting recognition system")
+        self.new_rgbImg = False
+
         while rospy.is_shutdown() == False:
             # Controls speed
             self.loopRate.sleep()
-            if self.new_rgbImg:
-                self.new_rgbImg = False
+
+            if self.new_rgbImg and self.msg_enable.data == True:
                 
                 self.recognize()
 
@@ -183,13 +193,9 @@ class FaceRecognizer():
                     
                     self.new_img = False
             
-        
-
-
-
 if __name__ == "__main__":
     FaceRecognizer(
         # Different topics for when using the webcam or the kinect camera
 
-        #"/camera/rgb/image_color")
-        "/usb_cam/image_raw")
+        "/camera/rgb/image_color")
+        #"/usb_cam/image_raw")

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # Node for training the network for a new person
 
 import math
@@ -15,7 +17,7 @@ import timeit
 
 class Trainer:
 
-    def __init__(self, new_topic_rgbImg, save_name="trained_knn_model.clf", n: int=None, face_crop: bool=False):
+    def __init__(self, save_name="trained_knn_model.clf", n: int=None, face_crop: bool=False):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
         self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../trained_models/" + save_name
@@ -25,8 +27,11 @@ class Trainer:
         self.cv_img = None           # CvImage
         self.bridge = CvBridge()
 
-        # Subscriber
-        self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
+        # Messages
+        self.msg_command = String()
+
+        # Subscribers
+        self.sub_command = rospy.Subscriber("/task_manager/manager_commands", String, self.callback_commands)
 
         # Publishers
         self.pub_current_img = rospy.Publisher("/utbots/vision/faces/image", Image, queue_size=1)
@@ -46,27 +51,15 @@ class Trainer:
         self.names = []
         self.face_encodings = []
         self.n_neighbors = n
-
-        self.start_time = timeit.default_timer()
         
-        # Routine for training, only necessary after all people have been added
-        self.load_faces()
-        self.train_data()
+        self.mainLoop()
 
-        self.end_time = timeit.default_timer()
-
-        print(str(self.end_time - self.start_time) + " sec.")
-
-
-    def callback_rgbImg(self, msg):
-        self.msg_rgbImg = msg
-        self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
-        self.new_rgbImg = True
-
+    def callback_commands(self, msg):
+        self.msg_command = msg
 
     def load_faces(self):
 
-        rospy.loginfo("Loading faces for training")
+        rospy.loginfo("[TRAIN] Loading faces for training")
         self.pub_speech.publish("Loading faces for training")
 
         # Loop through each person in the training set
@@ -86,7 +79,7 @@ class Trainer:
                 if False:#len(face_bounding_boxes) != 1:
                     # If there are no people (or too many people) in a training image, skip the image.
                     
-                    rospy.loginfo("Image {} not suitable for training: {}".format(img_path, "Didn't find a face" if len(face_bounding_boxes) < 1 else "Found more than one face"))
+                    rospy.loginfo("[TRAIN] Image {} not suitable for training: {}".format(img_path, "Didn't find a face" if len(face_bounding_boxes) < 1 else "Found more than one face"))
                 else:
                     # Add face encoding for current image to the training set
                     self.face_encodings.append(face_recognition.face_encodings(image, known_face_locations=face_bounding_boxes)[0])#, known_face_locations=face_bounding_boxes)[0])
@@ -94,17 +87,17 @@ class Trainer:
 
     def train_data(self):
 
-        rospy.loginfo("Starting the training phase")
+        rospy.loginfo("[TRAIN] Starting the training phase")
         self.pub_speech.publish("Starting to train")
 
         # Determine how many neighbors to use for weighting in the KNN classifier
         if self.n_neighbors is None:
             self.n_neighbors = int(round(math.sqrt(len(self.face_encodings))))
-            rospy.loginfo("K was chosen automatically")
+            rospy.loginfo("[TRAIN] K was chosen automatically")
         else:
-            rospy.loginfo("K was provided")
+            rospy.loginfo("[TRAIN] K was provided")
 
-        rospy.loginfo("It's value is " + str(self.n_neighbors))
+        rospy.loginfo("[TRAIN] It's value is " + str(self.n_neighbors))
                           
         #self.n_neighbors = k
 
@@ -117,10 +110,23 @@ class Trainer:
             with open(self.model_save_path, 'wb') as f:
                 pickle.dump(knn_clf, f)
         
-        rospy.loginfo("Training complete")
+        rospy.loginfo("[TRAIN] Training complete")
         self.pub_speech.publish("Training done")
 
+    def mainLoop(self):
+        while rospy.is_shutdown() == False:
+            self.loopRate.sleep()
+            if(self.msg_command.data == "memorize_person"):
+                self.loopRate = rospy.Rate(30)
+                self.msg_command.data = ""
+                self.start_time = timeit.default_timer()
 
+                # Routine for training, only necessary after all people have been added
+                self.load_faces()
+                self.train_data()
+
+                self.end_time = timeit.default_timer()
+                rospy.loginfo(str(self.end_time - self.start_time) + " sec.")
+                
 if __name__ == "__main__":
-
-    train = Trainer("/usb_cam/image_raw")
+    train = Trainer()

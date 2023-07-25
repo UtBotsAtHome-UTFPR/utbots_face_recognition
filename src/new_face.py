@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import os
 import os.path
 import face_recognition
@@ -21,12 +23,16 @@ class PictureTaker:
         self.cv_img = None           # CvImage
         self.bridge = CvBridge()
 
+        # Messages
+        self.msg_command = String()
+
         # Publisher
         self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
 
         # Subscribers
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
+        self.sub_command = rospy.Subscriber("/task_manager/manager_commands", String, self.callback_commands)
 
         # Subscriber variable 
         self.done_talking = String("yes")
@@ -48,6 +54,8 @@ class PictureTaker:
         self.face_encodings = []
         self.n_neighbors = None
 
+        self.mainLoop()
+
     def callback_doneTalking(self, msg):
         self.done_talking = msg
 
@@ -56,8 +64,10 @@ class PictureTaker:
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
 
-    def picture_path_maker(self):
+    def callback_commands(self, msg):
+        self.msg_command = msg
 
+    def picture_path_maker(self):
         name = None
         path = None
         
@@ -69,7 +79,7 @@ class PictureTaker:
 
             path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
 
-            rospy.loginfo(path)
+            rospy.loginfo("[REGISTER] " + path)
             # Check whether the specified path exists or not
             if not os.path.exists(path):
                 
@@ -113,9 +123,9 @@ class PictureTaker:
             pass
 
         if(log != "empty"):
-            rospy.loginfo(log)
+            rospy.loginfo("[REGISTER] " + log)
         else:
-            rospy.loginfo(speak)
+            rospy.loginfo("[REGISTER] " + speak)
         self.pub_instructions.publish(speak)
         
         time.sleep(0.2)
@@ -164,19 +174,20 @@ class PictureTaker:
             else:
                 i -= 1
                 
-                self.tts_publisher("Keep looking that way, we couldn't find you", "image has noone or over 2 people")
+                self.tts_publisher("Keep looking that way, we couldn't find you", "image has none or over 2 people")
                 
                 speak = False
             i += 1
 
         self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
 
-def main():
-    
-    program = PictureTaker("/usb_cam/image_raw")
-    path = program.picture_path_maker()
-    program.picture_taker(path)
-
+    def mainLoop(self):
+        while rospy.is_shutdown() == False:
+            self.loopRate.sleep()
+            if(self.msg_command.data == "register_face"):
+                self.msg_command.data = ""
+                path = self.picture_path_maker()
+                self.picture_taker(path)
 
 if __name__ == "__main__":
-    main()
+    PictureTaker("/camera/rgb/image_raw")

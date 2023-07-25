@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>face_recognition</name>
+  <name>utbots_face_recognition</name>
   <version>0.0.0</version>
   <description>The face_recognition package</description>
 
