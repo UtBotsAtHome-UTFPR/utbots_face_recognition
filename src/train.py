@@ -11,7 +11,7 @@ import face_recognition
 from face_recognition.face_recognition_cli import image_files_in_folder
 import rospy
 from sensor_msgs.msg import Image
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from cv_bridge import CvBridge
 import timeit
 
@@ -31,11 +31,12 @@ class Trainer:
         self.msg_command = String()
 
         # Subscribers
-        self.sub_command = rospy.Subscriber("/task_manager/manager_commands", String, self.callback_commands)
+        self.sub_command = rospy.Subscriber("/utbots/task_manager/manager_commands", String, self.callback_commands)
 
         # Publishers
         self.pub_current_img = rospy.Publisher("/utbots/vision/faces/image", Image, queue_size=1)
-        self.pub_speech = rospy.Publisher("/robot_speech", String, queue_size=1)
+        self.pub_enable_face = rospy.Publisher("/utbots/vision/faces/enable", Bool, queue_size=1)
+        self.pub_speech = rospy.Publisher("/utbots/voice/tts/robot_speech", String, queue_size=1)
 
         # ROS node
         rospy.init_node('face_recognizer_trainer', anonymous=True)
@@ -127,6 +128,7 @@ class Trainer:
 
                 self.end_time = timeit.default_timer()
                 rospy.loginfo(str(self.end_time - self.start_time) + " sec.")
+                self.pub_enable_face.publish(True)
                 
 if __name__ == "__main__":
     train = Trainer()

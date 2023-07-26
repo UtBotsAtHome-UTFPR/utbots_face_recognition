@@ -31,14 +31,15 @@ class PictureTaker:
         self.new_name = False
 
         # Publisher
-        self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
-        self.pub_train = rospy.Publisher("/task_manager/manager_commands", String, queue_size=1)
+        self.pub_instructions = rospy.Publisher("/utbots/voice/tts/robot_speech", String, queue_size=1)
+        self.pub_train = rospy.Publisher("/utbots/task_manager/manager_commands", String, queue_size=1)
 
         # Subscribers
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
-        self.sub_command = rospy.Subscriber("/task_manager/manager_commands", String, self.callback_commands)
+        self.sub_command = rospy.Subscriber("/utbots/task_manager/manager_commands", String, self.callback_commands)
         self.sub_name = rospy.Subscriber("/utbots/voice/nlu", String, self.callback_name)
+        self.sub_nlucheck = rospy.Subscriber("/utbots/voice/nlu_dbase", String, self.callback_nlucheck)
 
         # Subscriber variable 
         self.done_talking = String("yes")
@@ -75,7 +76,11 @@ class PictureTaker:
 
     def callback_name(self, msg):
         self.msg_name = msg
-        self.new_name = True
+
+    def callback_nlucheck(self, msg):
+        print(msg.data)
+        if(msg.data == "people"):
+            self.new_name = True
 
     def picture_path_maker(self):
         path = None
