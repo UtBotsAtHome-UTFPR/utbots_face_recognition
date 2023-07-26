@@ -65,6 +65,10 @@ class FaceRecognizer():
 
     def callback_enable(self, msg):
         self.msg_enable = msg
+        if self.msg_enable == True:
+            rospy.loginfo("[RECOGNIZE] Face Recognition ENABLED")
+        else:
+            rospy.loginfo("[RECOGNIZE] Face Recognition DISABLED")
 
     # Loads the knn trainer into the program
     def load_train_data(self):
@@ -75,11 +79,13 @@ class FaceRecognizer():
             self.knn_clf = pickle.load(f)
     
     def recognize(self):
+        self.pub_image = self.cv_img
 
         self.face_locations = face_recognition.face_locations(self.cv_img)
         self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
         if len(self.face_locations) == 0:
+            self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.cv_img, cv2.COLOR_BGR2RGB), encoding="passthrough"))
             return 
 
         # Calculates which person is more similar to each face
@@ -93,6 +99,7 @@ class FaceRecognizer():
         self.edited_image = self.cv_img
         for i in range(len(are_matches)):
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
+
         self.pub_image = self.edited_image
         self.new_img = True
     
@@ -197,5 +204,5 @@ if __name__ == "__main__":
     FaceRecognizer(
         # Different topics for when using the webcam or the kinect camera
 
-        "/camera/rgb/image_color")
-        #"/usb_cam/image_raw")
+        # "/camera/rgb/image_color")
+        "/usb_cam/image_raw")

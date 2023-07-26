@@ -25,14 +25,20 @@ class PictureTaker:
 
         # Messages
         self.msg_command = String()
+        self.msg_name = String()
+
+        # Flags
+        self.new_name = False
 
         # Publisher
         self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
+        self.pub_train = rospy.Publisher("/task_manager/manager_commands", String, queue_size=1)
 
         # Subscribers
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
         self.sub_command = rospy.Subscriber("/task_manager/manager_commands", String, self.callback_commands)
+        self.sub_name = rospy.Subscriber("/utbots/voice/nlu", String, self.callback_name)
 
         # Subscriber variable 
         self.done_talking = String("yes")
@@ -67,51 +73,57 @@ class PictureTaker:
     def callback_commands(self, msg):
         self.msg_command = msg
 
+    def callback_name(self, msg):
+        self.msg_name = msg
+        self.new_name = True
+
     def picture_path_maker(self):
-        name = None
         path = None
         
-        while(not name):
+        self.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
+        
+        while(self.new_name == False):
+            pass
 
-            self.tts_publisher("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name", "Type in your name: ")
+        self.new_name = False
 
-            name = input()
+        name = self.msg_name.data
 
-            path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
+        path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
 
-            rospy.loginfo("[REGISTER] " + path)
-            # Check whether the specified path exists or not
-            if not os.path.exists(path):
-                
-                os.makedirs(path)
-                
-                self.tts_publisher("Your file is ready for training", "New person is ready for training")
+        rospy.loginfo("[REGISTER] " + path)
+        # Check whether the specified path exists or not
+        if not os.path.exists(path):
+            
+            os.makedirs(path)
+            
+            self.tts_publisher("Your file is ready for training", "New person is ready for training")
 
-            else:
-                self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
-                
-                delete = input()
-                if delete == 'y' or delete == 'Y':
-                    try:
-                        shutil.rmtree(path)
+        # else:
+        #     self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
+            
+        #     delete = input()
+        #     if delete == 'y' or delete == 'Y':
+        #         try:
+        #             shutil.rmtree(path)
 
-                        self.tts_publisher("Their directory was removed", "directory was removed successfully")
+        #             self.tts_publisher("Their directory was removed", "directory was removed successfully")
 
-                        os.makedirs(path)
+        #             os.makedirs(path)
 
-                    # Ends function if directory can't be removed
-                    except OSError as x:
-                        rospy.logerr("Error occured: %s : %s" % (path, x.strerror))
-                        return 
+        #         # Ends function if directory can't be removed
+        #         except OSError as x:
+        #             rospy.logerr("Error occured: %s : %s" % (path, x.strerror))
+        #             return 
 
-                else:
-                    name = None
+        #     else:
+        #         name = None
 
-                    self.tts_publisher("In this case, do you wish to exit? Press y to exit or n to try again", "Do you wish to exit ?: [Y/n] ")
+        #         self.tts_publisher("In this case, do you wish to exit? Press y to exit or n to try again", "Do you wish to exit ?: [Y/n] ")
 
-                    close = input()
-                    if close == "y" or input == "Y":
-                        exit(1)
+        #         close = input()
+        #         if close == "y" or input == "Y":
+        #             exit(1)
 
         self.tts_publisher("Ok. Let's begin", "Created path for saving images")
 
@@ -188,6 +200,7 @@ class PictureTaker:
                 self.msg_command.data = ""
                 path = self.picture_path_maker()
                 self.picture_taker(path)
+                self.pub_train.publish("memorize_person")
 
 if __name__ == "__main__":
-    PictureTaker("/camera/rgb/image_raw")
+    PictureTaker("/usb_cam/image_raw")
