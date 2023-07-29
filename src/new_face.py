@@ -196,7 +196,7 @@ class PictureTaker:
                 i += 1
 
             self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
-
+            self.pub_train.publish("memorize_person")
         except:
             rospy.logerr("Image not available")       
 
@@ -207,7 +207,6 @@ class PictureTaker:
                 self.msg_command.data = ""
                 path = self.picture_path_maker()
                 self.picture_taker(path)
-                self.pub_train.publish("memorize_person")
 
 if __name__ == "__main__":
     PictureTaker("/usb_cam/image_raw")
