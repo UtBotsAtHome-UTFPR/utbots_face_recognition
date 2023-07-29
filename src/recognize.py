@@ -65,7 +65,7 @@ class FaceRecognizer():
 
     def callback_enable(self, msg):
         self.msg_enable = msg
-        if self.msg_enable == True:
+        if self.msg_enable.data == True:
             rospy.loginfo("[RECOGNIZE] Face Recognition ENABLED")
         else:
             rospy.loginfo("[RECOGNIZE] Face Recognition DISABLED")
@@ -179,8 +179,14 @@ class FaceRecognizer():
             face_names.append(name)
     
     def mainLoop(self):
-        rospy.loginfo("[RECOGNIZE] loading train data")
-        self.load_train_data()
+        while self.msg_enable.data == False:
+            pass
+
+        try:
+            self.load_train_data()
+            rospy.loginfo("[RECOGNIZE] loading train data")
+        except:
+            rospy.loginfo("[RECOGNIZE] no trained data yet")
 
         rospy.loginfo("[RECOGNIZE] Starting recognition system")
         self.new_rgbImg = False

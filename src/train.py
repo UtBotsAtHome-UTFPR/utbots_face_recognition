@@ -45,7 +45,7 @@ class Trainer:
         self.loopRate = rospy.Rate(30)
 
         # Eventually update verbose for making debugging easier (when it uses voice commands and so on)
-        self.verbose = True # If set to True talks about it's actions
+        self.verbose = True # If set to True talks about its actions
         self.should_face_crop = face_crop # If set to true, crops the images being taken to have only a face on them
 
         # Algorithm variables
@@ -98,7 +98,7 @@ class Trainer:
         else:
             rospy.loginfo("[TRAIN] K was provided")
 
-        rospy.loginfo("[TRAIN] It's value is " + str(self.n_neighbors))
+        rospy.loginfo("[TRAIN] Its value is " + str(self.n_neighbors))
                           
         #self.n_neighbors = k
 
