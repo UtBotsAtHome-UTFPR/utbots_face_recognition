@@ -171,7 +171,7 @@ class PictureTaker:
 
         self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
 
-def main():
+def execute():
     
     program = PictureTaker("/usb_cam/image_raw")
     path = program.picture_path_maker()
@@ -179,4 +179,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    execute()
