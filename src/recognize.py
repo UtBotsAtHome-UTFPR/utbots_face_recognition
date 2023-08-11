@@ -67,6 +67,11 @@ class FaceRecognizer():
         self.msg_enable = msg
         if self.msg_enable.data == True:
             rospy.loginfo("[RECOGNIZE] Face Recognition ENABLED")
+            try:
+                self.load_train_data()
+                rospy.loginfo("[RECOGNIZE] loading train data")
+            except:
+                rospy.loginfo("[RECOGNIZE] no trained data yet")
         else:
             rospy.loginfo("[RECOGNIZE] Face Recognition DISABLED")
 
@@ -179,20 +184,11 @@ class FaceRecognizer():
             face_names.append(name)
     
     def mainLoop(self):
-        while self.msg_enable.data == False:
-            pass
-
-        try:
-            self.load_train_data()
-            rospy.loginfo("[RECOGNIZE] loading train data")
-        except:
-            rospy.loginfo("[RECOGNIZE] no trained data yet")
-
         rospy.loginfo("[RECOGNIZE] Starting recognition system")
         self.new_rgbImg = False
 
         while rospy.is_shutdown() == False:
-            # Controls speed
+            # # Controls speed
             self.loopRate.sleep()
 
             if self.new_rgbImg and self.msg_enable.data == True:
@@ -210,5 +206,5 @@ if __name__ == "__main__":
     FaceRecognizer(
         # Different topics for when using the webcam or the kinect camera
 
-        # "/camera/rgb/image_color")
-        "/usb_cam/image_raw")
+        "/camera/rgb/image_color")
+        # "/usb_cam/image_raw")

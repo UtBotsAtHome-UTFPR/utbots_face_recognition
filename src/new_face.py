@@ -3,7 +3,6 @@
 import os
 import os.path
 import face_recognition
-from face_recognition.face_recognition_cli import image_files_in_folder
 import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String, Bool
@@ -209,4 +208,4 @@ class PictureTaker:
                 self.picture_taker(path)
 
 if __name__ == "__main__":
-    PictureTaker("/usb_cam/image_raw")
+    PictureTaker("/camera/rgb/image_color")
