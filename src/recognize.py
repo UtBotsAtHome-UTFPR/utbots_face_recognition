@@ -22,6 +22,7 @@ class FaceRecognizer():
 
         # Flags
         self.new_rgbImg = False
+        self.trained_recognizer = False
 
         # Messages
         self.msg_enable = Bool()
@@ -70,6 +71,7 @@ class FaceRecognizer():
             try:
                 self.load_train_data()
                 rospy.loginfo("[RECOGNIZE] loading train data")
+                self.trained_recognizer = True
             except:
                 rospy.loginfo("[RECOGNIZE] no trained data yet")
         else:
@@ -191,7 +193,7 @@ class FaceRecognizer():
             # # Controls speed
             self.loopRate.sleep()
 
-            if self.new_rgbImg and self.msg_enable.data == True:
+            if self.new_rgbImg and self.msg_enable.data and self.trained_recognizer:
                 
                 self.recognize()
 

@@ -72,27 +72,27 @@ class PictureTaker:
 
     def callback_commands(self, msg):
         self.msg_command = msg
+        if(msg.data == "register_face"):
+            self.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
+        
 
     def callback_nlumsg(self, msg):
         if(msg.database.data == "people"):
             self.msg_name.data = msg.text.data
             self.new_name = True
 
-    def picture_path_maker(self):
-        path = None
-        
-        self.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
-        
-        while(self.new_name == False):
-            pass
+    def capture_process(self):
+        if(self.new_name == True):
+            path = self.picture_path_maker()
+            self.new_name = False
+            self.picture_taker(path)
 
-        self.new_name = False
+    def picture_path_maker(self):
 
         name = self.msg_name.data
-
         path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
-
         rospy.loginfo("[REGISTER] " + path)
+
         # Check whether the specified path exists or not
         if not os.path.exists(path):
             
@@ -129,21 +129,14 @@ class PictureTaker:
         self.tts_publisher("Ok. Let's begin", "Created path for saving images")
 
         return path
-    
+
     # tts = text to speach
     def tts_publisher(self, speak, log="empty"):
-        while(self.is_talking == True):
-            pass
-
         if(log != "empty"):
             rospy.loginfo("[REGISTER] " + log)
         else:
             rospy.loginfo("[REGISTER] " + speak)
-        self.pub_instructions.publish(speak)
-        
-        time.sleep(1)
-        while(self.is_talking == True):
-            pass
+        self.pub_instructions.publish(speak)    
 
     # Control for telling the user what to do for taking pictures
     def pic_instructions(self, i, speak):
@@ -171,6 +164,7 @@ class PictureTaker:
 
         try: 
             while(i < self.pic_quantity):
+                time.sleep(2)
                 
                 self.pic_instructions(i, speak)
 
@@ -198,14 +192,16 @@ class PictureTaker:
             self.pub_train.publish("memorize_person")
         except:
             rospy.logerr("Image not available")       
+        
+        self.msg_command.data = ""
 
     def mainLoop(self):
         while rospy.is_shutdown() == False:
             self.loopRate.sleep()
-            if(self.msg_command.data == "register_face"):
-                self.msg_command.data = ""
-                path = self.picture_path_maker()
-                self.picture_taker(path)
+            if(self.msg_command.data == "register_face"):         
+                self.capture_process()
 
 if __name__ == "__main__":
-    PictureTaker("/camera/rgb/image_color")
+    PictureTaker(
+        "/camera/rgb/image_color"
+        # "/usb_cam/image_raw")
