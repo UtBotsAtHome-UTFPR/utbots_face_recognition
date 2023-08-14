@@ -204,4 +204,5 @@ class PictureTaker:
 if __name__ == "__main__":
     PictureTaker(
         "/camera/rgb/image_color"
-        # "/usb_cam/image_raw")
+        # "/usb_cam/image_raw"
+        )
