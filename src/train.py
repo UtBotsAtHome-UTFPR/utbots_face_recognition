@@ -15,6 +15,22 @@ from std_msgs.msg import String, Bool
 from cv_bridge import CvBridge
 import timeit
 
+class SmTrainer(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=["trained", "aborted"])
+        self.train = Trainer()
+        
+    def execute(self, userdata):
+        self.train.start_time = timeit.default_timer()
+
+        # Routine for training, only necessary after all people have been added
+        self.train.load_faces()
+        self.train.train_data()
+
+        self.train.end_time = timeit.default_timer()
+        rospy.loginfo(str(self.train.end_time - self.train.start_time) + " sec.")
+        self.train.pub_enable_face.publish(True)
+
 class Trainer:
 
     def __init__(self, save_name="trained_knn_model.clf", n: int=None, face_crop: bool=False):
@@ -52,11 +68,6 @@ class Trainer:
         self.names = []
         self.face_encodings = []
         self.n_neighbors = n
-        
-        self.mainLoop()
-
-    def callback_commands(self, msg):
-        self.msg_command = msg
 
     def load_faces(self):
 
@@ -113,22 +124,3 @@ class Trainer:
         
         rospy.loginfo("[TRAIN] Training complete")
         self.pub_speech.publish("Training done")
-
-    def mainLoop(self):
-        while rospy.is_shutdown() == False:
-            self.loopRate.sleep()
-            if(self.msg_command.data == "memorize_person"):
-                self.loopRate = rospy.Rate(30)
-                self.msg_command.data = ""
-                self.start_time = timeit.default_timer()
-
-                # Routine for training, only necessary after all people have been added
-                self.load_faces()
-                self.train_data()
-
-                self.end_time = timeit.default_timer()
-                rospy.loginfo(str(self.end_time - self.start_time) + " sec.")
-                self.pub_enable_face.publish(True)
-                
-if __name__ == "__main__":
-    train = Trainer()

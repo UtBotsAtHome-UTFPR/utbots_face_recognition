@@ -11,8 +11,19 @@ import cv2
 from cv_bridge import CvBridge
 import shutil
 import time
+import smach
 
-# Add capability to search for a person by walking around the room, or at least looking around
+class SmPictureTaker(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=["registered","aborted"])
+        self.picture_taker = PictureTaker(
+            "/camera/rgb/image_color"
+            # "/usb_cam/image_raw"
+            )
+        
+        def execute(self, userdata):
+            self.picture_taker.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
+            self.picture_taker.capture_process()
 
 class PictureTaker:
     def __init__(self, new_topic_rgbImg):
@@ -32,12 +43,10 @@ class PictureTaker:
 
         # Publisher
         self.pub_instructions = rospy.Publisher("/utbots/voice/tts/robot_speech", String, queue_size=1)
-        self.pub_train = rospy.Publisher("/utbots/task_manager/manager_commands", String, queue_size=1)
 
         # Subscribers
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
         self.sub_is_talking = rospy.Subscriber("/utbots/voice/tts/is_robot_talking", Bool, self.callback_isTalking)
-        self.sub_command = rospy.Subscriber("/utbots/task_manager/manager_commands", String, self.callback_commands)
         self.sub_nlu_msg = rospy.Subscriber("/utbots/voice/nlu_msg", NLU, self.callback_nlumsg)
 
         # Subscriber variable 
@@ -69,23 +78,19 @@ class PictureTaker:
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
-
-    def callback_commands(self, msg):
-        self.msg_command = msg
-        if(msg.data == "register_face"):
-            self.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
         
-
     def callback_nlumsg(self, msg):
         if(msg.database.data == "people"):
             self.msg_name.data = msg.text.data
             self.new_name = True
 
-    def capture_process(self):
-        if(self.new_name == True):
-            path = self.picture_path_maker()
-            self.new_name = False
-            self.picture_taker(path)
+    # tts = text to speach
+    def tts_publisher(self, speak, log="empty"):
+        if(log != "empty"):
+            rospy.loginfo("[REGISTER] " + log)
+        else:
+            rospy.loginfo("[REGISTER] " + speak)
+        self.pub_instructions.publish(speak)    
 
     def picture_path_maker(self):
 
@@ -129,14 +134,6 @@ class PictureTaker:
         self.tts_publisher("Ok. Let's begin", "Created path for saving images")
 
         return path
-
-    # tts = text to speach
-    def tts_publisher(self, speak, log="empty"):
-        if(log != "empty"):
-            rospy.loginfo("[REGISTER] " + log)
-        else:
-            rospy.loginfo("[REGISTER] " + speak)
-        self.pub_instructions.publish(speak)    
 
     # Control for telling the user what to do for taking pictures
     def pic_instructions(self, i, speak):
@@ -195,14 +192,8 @@ class PictureTaker:
         
         self.msg_command.data = ""
 
-    def mainLoop(self):
-        while rospy.is_shutdown() == False:
-            self.loopRate.sleep()
-            if(self.msg_command.data == "register_face"):         
-                self.capture_process()
-
-if __name__ == "__main__":
-    PictureTaker(
-        "/camera/rgb/image_color"
-        # "/usb_cam/image_raw"
-        )
+    def capture_process(self):
+        if(self.new_name == True):
+            path = self.picture_path_maker()
+            self.new_name = False
+            self.picture_taker(path)
