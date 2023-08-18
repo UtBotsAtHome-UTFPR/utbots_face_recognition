@@ -53,7 +53,7 @@ class PictureTaker:
         self.is_talking = False
 
         # ROS node
-        rospy.init_node('face_recognizer_new_person', anonymous=True)
+        # rospy.init_node('face_recognizer_new_person', anonymous=True)
         
         # Time
         self.loopRate = rospy.Rate(30)
@@ -68,8 +68,6 @@ class PictureTaker:
         self.names = []
         self.face_encodings = []
         self.n_neighbors = None
-
-        self.mainLoop()
 
     def callback_isTalking(self, msg):
         self.is_talking = msg.data

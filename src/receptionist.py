@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
-import new_face
-import train
-import smach, rospy
+from new_face import SmPictureTaker
+from train import SmTrainer
+import smach
+import rospy
 
 def main():
     rospy.init_node('receptionist_sm')

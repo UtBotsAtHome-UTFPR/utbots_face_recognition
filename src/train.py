@@ -14,6 +14,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String, Bool
 from cv_bridge import CvBridge
 import timeit
+import smach
 
 class SmTrainer(smach.State):
     def __init__(self):
@@ -46,16 +47,13 @@ class Trainer:
         # Messages
         self.msg_command = String()
 
-        # Subscribers
-        self.sub_command = rospy.Subscriber("/utbots/task_manager/manager_commands", String, self.callback_commands)
-
         # Publishers
         self.pub_current_img = rospy.Publisher("/utbots/vision/faces/image", Image, queue_size=1)
         self.pub_enable_face = rospy.Publisher("/utbots/vision/faces/enable", Bool, queue_size=1)
         self.pub_speech = rospy.Publisher("/utbots/voice/tts/robot_speech", String, queue_size=1)
 
         # ROS node
-        rospy.init_node('face_recognizer_trainer', anonymous=True)
+        # rospy.init_node('face_recognizer_trainer', anonymous=True)
         
         # Time
         self.loopRate = rospy.Rate(30)
