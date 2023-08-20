@@ -15,15 +15,16 @@ import smach
 
 class SmPictureTaker(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=["registered","aborted"])
+        smach.State.__init__(self, outcomes=["registered","aborted","wait_name"])
         self.picture_taker = PictureTaker(
-            "/camera/rgb/image_color"
-            # "/usb_cam/image_raw"
+            # "/camera/rgb/image_color"
+            "/usb_cam/image_raw"
             )
         
-        def execute(self, userdata):
-            self.picture_taker.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
-            self.picture_taker.capture_process()
+    def execute(self, userdata):
+        self.picture_taker.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
+        state = self.picture_taker.capture_process()
+        return state
 
 class PictureTaker:
     def __init__(self, new_topic_rgbImg):
@@ -185,8 +186,10 @@ class PictureTaker:
 
             self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
             self.pub_train.publish("memorize_person")
+            return "registered"
         except:
-            rospy.logerr("Image not available")       
+            rospy.logerr("Image not available")      
+            return "aborted" 
         
         self.msg_command.data = ""
 
@@ -194,4 +197,7 @@ class PictureTaker:
         if(self.new_name == True):
             path = self.picture_path_maker()
             self.new_name = False
-            self.picture_taker(path)
+            state = self.picture_taker(path)
+            return state
+        else:
+            return "wait_name"

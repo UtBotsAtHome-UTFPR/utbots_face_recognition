@@ -11,7 +11,8 @@ def main():
     with sm:
         smach.StateMachine.add('TAKE_PICTURES', SmPictureTaker(), 
                                transitions={'registered':"TRAIN",
-                                            'aborted':'failed'})
+                                            'aborted':'failed',
+                                            "wait_name":"TAKE_PICTURES"})
         smach.StateMachine.add('TRAIN', SmTrainer(), 
                                transitions={'trained':'succeded',
                                             'aborted':'failed'})
