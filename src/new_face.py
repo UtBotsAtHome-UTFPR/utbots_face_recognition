@@ -20,9 +20,11 @@ class SmPictureTaker(smach.State):
             # "/camera/rgb/image_color"
             "/usb_cam/image_raw"
             )
+        time.sleep(2)
+        self.picture_taker.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
         
     def execute(self, userdata):
-        self.picture_taker.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
+        # self.picture_taker.tts_publisher("I will give you instructions for face recognition ... Firstly, say your name", "Say your name ")
         state = self.picture_taker.capture_process()
         return state
 
@@ -104,33 +106,7 @@ class PictureTaker:
             
             self.tts_publisher("Your file is ready for training", "New person is ready for training")
 
-        # else:
-        #     self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
-            
-        #     delete = input()
-        #     if delete == 'y' or delete == 'Y':
-        #         try:
-        #             shutil.rmtree(path)
-
-        #             self.tts_publisher("Their directory was removed", "directory was removed successfully")
-
-        #             os.makedirs(path)
-
-        #         # Ends function if directory can't be removed
-        #         except OSError as x:
-        #             rospy.logerr("Error occured: %s : %s" % (path, x.strerror))
-        #             return 
-
-        #     else:
-        #         name = None
-
-        #         self.tts_publisher("In this case, do you wish to exit? Press y to exit or n to try again", "Do you wish to exit ?: [Y/n] ")
-
-        #         close = input()
-        #         if close == "y" or input == "Y":
-        #             exit(1)
-
-        self.tts_publisher("Ok. Let's begin", "Created path for saving images")
+        self.tts_publisher(f"Okay, {name}. Let's begin", "Created path for saving images")
 
         return path
 
@@ -179,19 +155,16 @@ class PictureTaker:
                 else:
                     i -= 1
                     
-                    self.tts_publisher("Keep looking that way, we couldn't find you", "image has none or over 2 people")
+                    self.tts_publisher("Keep looking that way, i could not find you", "image has none or over 2 people")
                     
                     speak = False
                 i += 1
 
             self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
-            self.pub_train.publish("memorize_person")
             return "registered"
         except:
             rospy.logerr("Image not available")      
             return "aborted" 
-        
-        self.msg_command.data = ""
 
     def capture_process(self):
         if(self.new_name == True):

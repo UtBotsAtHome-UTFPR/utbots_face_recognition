@@ -22,15 +22,19 @@ class SmTrainer(smach.State):
         self.train = Trainer()
         
     def execute(self, userdata):
-        self.train.start_time = timeit.default_timer()
+        try:
+            self.train.start_time = timeit.default_timer()
 
-        # Routine for training, only necessary after all people have been added
-        self.train.load_faces()
-        self.train.train_data()
+            # Routine for training, only necessary after all people have been added
+            self.train.load_faces()
+            self.train.train_data()
 
-        self.train.end_time = timeit.default_timer()
-        rospy.loginfo(str(self.train.end_time - self.train.start_time) + " sec.")
-        self.train.pub_enable_face.publish(True)
+            self.train.end_time = timeit.default_timer()
+            rospy.loginfo(str(self.train.end_time - self.train.start_time) + " sec.")
+            self.train.pub_enable_face.publish(True)
+            return "trained"
+        except:
+            return "aborted"
 
 class Trainer:
 
