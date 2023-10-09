@@ -62,7 +62,7 @@ class FaceRecognizer():
 
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
-        self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
+        self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
         self.new_rgbImg = True
 
     def callback_enable(self, msg):
@@ -93,7 +93,8 @@ class FaceRecognizer():
         self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
         if len(self.face_locations) == 0:
-            self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.cv_img, cv2.COLOR_BGR2RGB), encoding="passthrough"))
+            #self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
+            self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(self.pub_image, encoding="passthrough"))
             return 
 
         # Calculates which person is more similar to each face
@@ -199,12 +200,12 @@ class FaceRecognizer():
                 self.recognize()
 
                 self.pub_marked_people.publish(self.recognized_people)
-                                
+
                 if self.new_img:
                     self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
-                    
                     self.new_img = False
-            
+                    #cv2.imwrite("~/catkin_ws/teste/lol", self.pub_image)
+
 if __name__ == "__main__":
     FaceRecognizer(
         # Different topics for when using the webcam or the kinect camera

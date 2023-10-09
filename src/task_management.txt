@@ -5,14 +5,16 @@ Fixes:
 not moving too much is important
 7) New_face crashes if there is no image
 
-Procedure:
-1) Add boolean to run the training phase (ideally without reloading objects, no promises)
+8) Auto replace same name operator
 
-2) Make it so all nodes publish that they are done when they finish so next step can start
+Procedure:
+X) Add boolean to run the training phase (ideally without reloading objects, no promises)
+
+X) Make it so all nodes publish that they are done when they finish so next step can start
 
 4) Save the images into pdf
 
-3) Make node to publish when to start each part of the task:
+X) Make node to publish when to start each part of the task:
     Get images
     Publish: it's time to train and wait 1 second to pub the stop
     Do a 1 minute training session
@@ -20,4 +22,4 @@ Procedure:
     Rodar o recognize e salvar 3 imagens com seus resultados
     Análisar onde e mostrar na tela
 
-    
+Vision_tools ou utbots_vision salva imagem

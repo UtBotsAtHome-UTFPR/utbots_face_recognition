@@ -99,7 +99,7 @@ class PictureTaker:
             else:
                 self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
                 
-                delete = input()
+                delete = 'y'#input()
                 if delete == 'y' or delete == 'Y':
                     try:
                         shutil.rmtree(path)
@@ -158,7 +158,7 @@ class PictureTaker:
         if(speak):
             self.tts_publisher(message)
 
-        time.sleep(1)
+        #time.sleep(1)
 
     def picture_taker(self, path):
         
