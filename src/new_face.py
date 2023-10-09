@@ -45,7 +45,7 @@ class PictureTaker:
         # Time
         self.loopRate = rospy.Rate(30)
 
-        self.pic_quantity = 15
+        self.pic_quantity = 25
 
         # Eventually update verbose for making debugging easier (when it uses voice commands and so on)
         self.verbose = True # If set to True prints to the terminal when an image is unfit
@@ -158,7 +158,7 @@ class PictureTaker:
         if(speak):
             self.tts_publisher(message)
 
-        #time.sleep(1)
+        time.sleep(1)
 
     def picture_taker(self, path):
         
@@ -204,8 +204,9 @@ class PictureTaker:
 
 def execute():
     
-    program = PictureTaker("/usb_cam/image_raw")
+    program = PictureTaker("/camera/rgb/image_color")
     program.mainLoop()
+    
 
 
 if __name__ == "__main__":

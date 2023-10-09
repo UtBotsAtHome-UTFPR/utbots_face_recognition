@@ -4,6 +4,7 @@ import time
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+import timeit
 
 class RecognitionTask:
     
@@ -56,13 +57,22 @@ class RecognitionTask:
         time.sleep(1)
         self.pub_train_enable.publish("no")
 
+        start_time = timeit.default_timer()
+
         while self.msg_train_done.data != "yes":
+            pass
+
+        end_time = timeit.default_timer()
+
+        while(end_time - start_time) < 60:
             pass
 
         self.new_image = False
         self.pub_recognize_enable.publish("yes")
         time.sleep(1)
-        time.sleep(100)
+
+        time.sleep(100) # Virar 180º
+        
         while(not self.new_image):
             pass
 
