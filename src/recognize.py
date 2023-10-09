@@ -1,4 +1,7 @@
+#!/usr/bin/python3
+
 import rospy
+from std_msgs.msg import Bool
 from sensor_msgs.msg import Image, RegionOfInterest
 from cv_bridge import CvBridge
 import face_recognition
@@ -8,6 +11,7 @@ import os.path
 import pickle
 from vision_msgs.msg import Object, ObjectArray
 import cv2
+from std_msgs.msg import String
 
 class FaceRecognizer():
 
@@ -19,8 +23,14 @@ class FaceRecognizer():
 
         # Flags
         self.new_rgbImg = False
+        self.trained_recognizer = False
+
+        # Messages
+        self.msg_enable = String()
+        self.msg_enable.data = "no"
 
         # Subscriber
+        self.sub_enable = rospy.Subscriber("/utbots/vision/faces/recognize_enable", String, self.callback_enable)
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
 
         # Publisher
@@ -47,16 +57,26 @@ class FaceRecognizer():
         # Image that shows recognition
         self.edited_image = None
         self.pub_image = None
-        rospy.loginfo("loading train data")
-        self.load_train_data()
 
-        rospy.loginfo("Starting recognition system")
         self.mainLoop()
 
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
+
+    def callback_enable(self, msg):
+        self.msg_enable = msg
+        if self.msg_enable.data == "yes":
+            rospy.loginfo("[RECOGNIZE] Face Recognition ENABLED")
+            try:
+                self.load_train_data()
+                rospy.loginfo("[RECOGNIZE] loading train data")
+                self.trained_recognizer = True
+            except:
+                rospy.loginfo("[RECOGNIZE] no trained data yet")
+        else:
+            rospy.loginfo("[RECOGNIZE] Face Recognition DISABLED")
 
     # Loads the knn trainer into the program
     def load_train_data(self):
@@ -67,11 +87,13 @@ class FaceRecognizer():
             self.knn_clf = pickle.load(f)
     
     def recognize(self):
+        self.pub_image = self.cv_img
 
         self.face_locations = face_recognition.face_locations(self.cv_img)
         self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
         if len(self.face_locations) == 0:
+            self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.cv_img, cv2.COLOR_BGR2RGB), encoding="passthrough"))
             return 
 
         # Calculates which person is more similar to each face
@@ -80,16 +102,14 @@ class FaceRecognizer():
   
         self.recognized_people = ObjectArray()
 
-        rospy.loginfo("Recognized people are: ")
+        rospy.loginfo("[RECOGNIZE] Recognized people are: ")
         # Adds each person in the image to recognized_people and alters img to show them
         self.edited_image = self.cv_img
         for i in range(len(are_matches)):
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
+
         self.pub_image = self.edited_image
         self.new_img = True
-
-        
-
     
     def draw_rec_on_faces(self, name, coordinates):
         img = self.edited_image
@@ -132,7 +152,7 @@ class FaceRecognizer():
         person.parent_img.data = self.msg_rgbImg
 
         # Shows who has been found on the terminal window
-        rospy.loginfo(person.id.data)
+        rospy.loginfo("[RECOGNIZE] " + person.id.data)
         
         return person
 
@@ -165,14 +185,16 @@ class FaceRecognizer():
                 name = self.known_face_names[best_match_index]
 
             face_names.append(name)
-
     
     def mainLoop(self):
+        rospy.loginfo("[RECOGNIZE] Starting recognition system")
+        self.new_rgbImg = False
+
         while rospy.is_shutdown() == False:
-            # Controls speed
+            # # Controls speed
             self.loopRate.sleep()
-            if self.new_rgbImg:
-                self.new_rgbImg = False
+
+            if self.new_rgbImg and self.msg_enable.data == "yes" and self.trained_recognizer:
                 
                 self.recognize()
 
@@ -183,10 +205,6 @@ class FaceRecognizer():
                     
                     self.new_img = False
             
-        
-
-
-
 if __name__ == "__main__":
     FaceRecognizer(
         # Different topics for when using the webcam or the kinect camera

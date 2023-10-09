@@ -12,6 +12,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from cv_bridge import CvBridge
 import timeit
+from std_msgs.msg import Bool
 
 class Trainer:
 
@@ -21,16 +22,22 @@ class Trainer:
         self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../trained_models/" + save_name
         self.knn_algo = 'ball_tree'
 
+        self.msg_enable = String()
+        self.msg_enable.data = "no"
+
         # OpenCV
         self.cv_img = None           # CvImage
         self.bridge = CvBridge()
 
         # Subscriber
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
+        self.sub_enable = rospy.Subscriber("/utbots/vision/faces/train_enable", String, self.callback_enable)
 
         # Publishers
         self.pub_current_img = rospy.Publisher("/utbots/vision/faces/image", Image, queue_size=1)
         self.pub_speech = rospy.Publisher("/robot_speech", String, queue_size=1)
+        self.pub_done = rospy.Publisher("/utbots/vision/faces/train_done", String, queue_size=1)
+        # Eventually self pub false to enable so training isn't done in a loop
 
         # ROS node
         rospy.init_node('face_recognizer_trainer', anonymous=True)
@@ -47,21 +54,32 @@ class Trainer:
         self.face_encodings = []
         self.n_neighbors = n
 
-        self.start_time = timeit.default_timer()
+        self.pub_done.publish("yes")
+
+        # Run this when enabled
+
+        #self.start_time = timeit.default_timer()
         
         # Routine for training, only necessary after all people have been added
-        self.load_faces()
-        self.train_data()
+        #self.load_faces()
+        #self.train_data()
 
-        self.end_time = timeit.default_timer()
+        #self.end_time = timeit.default_timer()
 
-        print(str(self.end_time - self.start_time) + " sec.")
-
+        #print(str(self.end_time - self.start_time) + " sec.")
 
     def callback_rgbImg(self, msg):
         self.msg_rgbImg = msg
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
+
+    def callback_enable(self, msg):
+        self.msg_enable = msg
+        if self.msg_enable.data == "yes":
+            rospy.loginfo("[RECOGNIZE] Face Recognition Training ENABLED")
+
+        else:
+            rospy.loginfo("[RECOGNIZE] Face Recognition Training DISABLED")
 
 
     def load_faces(self):
@@ -120,7 +138,28 @@ class Trainer:
         rospy.loginfo("Training complete")
         self.pub_speech.publish("Training done")
 
+    def mainLoop(self):
+        
+        while rospy.is_shutdown() == False:
+            # Controls speed
+            self.loopRate.sleep()
+            # Put the enable
+            if self.msg_enable.data == "yes":
+                self.pub_done.publish("no")
+
+                self.start_time = timeit.default_timer()
+                
+                # Routine for training, only necessary after all people have been added
+                self.load_faces()
+                self.train_data()
+
+                self.end_time = timeit.default_timer()
+
+                print(str(self.end_time - self.start_time) + " sec.")
+            self.pub_done.publish("yes")
+
 
 if __name__ == "__main__":
 
     train = Trainer("/usb_cam/image_raw")
+    train.mainLoop()

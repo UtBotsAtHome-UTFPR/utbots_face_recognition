@@ -1,3 +1,5 @@
+# AJUSTAR self.pic_quantity PARA A COMPETIÇÃO (NO NUC)
+
 import os
 import os.path
 import face_recognition
@@ -9,6 +11,7 @@ import cv2
 from cv_bridge import CvBridge
 import shutil
 import time
+from std_msgs.msg import Bool
 
 # Add capability to search for a person by walking around the room, or at least looking around
 
@@ -17,16 +20,21 @@ class PictureTaker:
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
         
+        self.msg_enable = String()
+        self.msg_enable.data = "no"
+
         # OpenCV
         self.cv_img = None           # CvImage
         self.bridge = CvBridge()
 
         # Publisher
         self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
+        self.pub_done = rospy.Publisher("/utbots/vision/faces/new_face_done", String, queue_size=1)
 
         # Subscribers
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
+        self.sub_enable = rospy.Subscriber("/utbots/vision/faces/new_face_enable", String, self.callback_enable)
 
         # Subscriber variable 
         self.done_talking = String("yes")
@@ -47,6 +55,17 @@ class PictureTaker:
         self.names = []
         self.face_encodings = []
         self.n_neighbors = None
+        #done = Bool
+        #done.data = False
+        self.pub_done.publish("yes")
+
+    def callback_enable(self, msg):
+        self.msg_enable = msg
+        if self.msg_enable.data == "yes":
+            rospy.loginfo("[RECOGNIZE] Face Recognition New Face ENABLED")
+
+        else:
+            rospy.loginfo("[RECOGNIZE] Face Recognition New Face DISABLED")
 
     def callback_doneTalking(self, msg):
         self.done_talking = msg
@@ -63,9 +82,9 @@ class PictureTaker:
         
         while(not name):
 
-            self.tts_publisher("I will give you instructions for face recognition by using my tiny winy little voice. uWu... Firstly, type in your name", "Type in your name: ")
+            self.tts_publisher("Let's begin", "Let's begin")
 
-            name = input()
+            name = "Operator"#input()
 
             path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
 
@@ -75,7 +94,7 @@ class PictureTaker:
                 
                 os.makedirs(path)
                 
-                self.tts_publisher("Your file is ready for training", "New person is ready for training")
+                #self.tts_publisher("Your file is ready for training", "New person is ready for training")
 
             else:
                 self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
@@ -103,7 +122,7 @@ class PictureTaker:
                     if close == "y" or input == "Y":
                         exit(1)
 
-        self.tts_publisher("Ok. Let's begin", "Created path for saving images")
+        #self.tts_publisher("Ok. Let's begin", "Created path for saving images")
 
         return path
     
@@ -126,15 +145,15 @@ class PictureTaker:
     def pic_instructions(self, i, speak):
 
         if i % 5 == 0:
-            message = "Tilt your head directly into the camera"
+            message = "forward"
         if i % 5 == 1:
-            message = "Tilt your head upwards"
+            message = "up"
         if i % 5 == 2:
-            message = "Tilt your head downwards"
+            message = "down"
         if i % 5 == 3:
-            message = "Tilt your head to the left of the camera"
+            message = "left"
         if i % 5 == 4:
-            message = "Tilt your head to the right of the camera"
+            message = "right"
 
         if(speak):
             self.tts_publisher(message)
@@ -164,18 +183,29 @@ class PictureTaker:
             else:
                 i -= 1
                 
-                self.tts_publisher("Keep looking that way, we couldn't find you", "image has noone or over 2 people")
+                self.tts_publisher("Keep looking, we couldn't find you", "image has no one")
                 
                 speak = False
             i += 1
 
-        self.tts_publisher("You're done, congratulations and thank you very much", "Training complete")
+        self.tts_publisher("You're done", "Necessary images are gathered")
+
+    def mainLoop(self):
+        while rospy.is_shutdown() == False:
+            # Controls speed
+            self.loopRate.sleep()
+            # Put the enable
+            if self.msg_enable.data == "yes":
+                self.pub_done.publish("no")
+                path = self.picture_path_maker()
+                self.picture_taker(path)
+            self.pub_done.publish("yes")
+
 
 def execute():
     
     program = PictureTaker("/usb_cam/image_raw")
-    path = program.picture_path_maker()
-    program.picture_taker(path)
+    program.mainLoop()
 
 
 if __name__ == "__main__":
