@@ -97,14 +97,14 @@ class PictureTaker:
                 #self.tts_publisher("Your file is ready for training", "New person is ready for training")
 
             else:
-                self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
+                #self.tts_publisher("Unfortunately, this name is taken, would you like to override it? Type in y to confirm or n to choose another name", "Do you want to replace the user by that name?: [Y/n] ")
                 
                 delete = 'y'#input()
                 if delete == 'y' or delete == 'Y':
                     try:
                         shutil.rmtree(path)
 
-                        self.tts_publisher("Their directory was removed", "directory was removed successfully")
+                        #self.tts_publisher("Their directory was removed", "directory was removed successfully")
 
                         os.makedirs(path)
 
@@ -116,7 +116,7 @@ class PictureTaker:
                 else:
                     name = None
 
-                    self.tts_publisher("In this case, do you wish to exit? Press y to exit or n to try again", "Do you wish to exit ?: [Y/n] ")
+                    #self.tts_publisher("In this case, do you wish to exit? Press y to exit or n to try again", "Do you wish to exit ?: [Y/n] ")
 
                     close = input()
                     if close == "y" or input == "Y":
@@ -158,7 +158,7 @@ class PictureTaker:
         if(speak):
             self.tts_publisher(message)
 
-        time.sleep(1)
+        time.sleep(1.5)
 
     def picture_taker(self, path):
         
@@ -183,12 +183,12 @@ class PictureTaker:
             else:
                 i -= 1
                 
-                self.tts_publisher("Keep looking, we couldn't find you", "image has no one")
+                self.tts_publisher("Again", "image has no one")
                 
                 speak = False
             i += 1
 
-        self.tts_publisher("You're done", "Necessary images are gathered")
+        #self.tts_publisher("You're done", "Necessary images are gathered")
 
     def mainLoop(self):
         while rospy.is_shutdown() == False:
