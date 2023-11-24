@@ -76,6 +76,7 @@ class PictureTaker:
         self.new_rgbImg = True
 
     def picture_path_maker(self):
+        print("path maker")
 
         name = None
         path = None
@@ -121,6 +122,7 @@ class PictureTaker:
                     close = input()
                     if close == "y" or input == "Y":
                         exit(1)
+           
 
         #self.tts_publisher("Ok. Let's begin", "Created path for saving images")
 
@@ -197,14 +199,17 @@ class PictureTaker:
             # Put the enable
             if self.msg_enable.data == "yes":
                 self.pub_done.publish("no")
+                # ESSE PRINT FAZ O PROGRAMA FUNCIONAR, SE ALGUÉM TIRAR EU VOU MATAR
+                print("here")
                 path = self.picture_path_maker()
                 self.picture_taker(path)
             self.pub_done.publish("yes")
 
-
 def execute():
     
-    program = PictureTaker("/camera/rgb/image_color")
+    program = PictureTaker(
+        "/usb_cam/image_raw")
+        #"/camera/rgb/image_color")
     program.mainLoop()
     
 

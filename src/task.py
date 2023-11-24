@@ -22,7 +22,7 @@ class RecognitionTask:
         self.gotMsg = False
         #self.msg_train_done.data = "no"
         #self.msg_new_face_done.data = "no"
-        self.package_path = rospkg.RosPack().get_path('vision_tools')
+        self.package_path = rospkg.RosPack().get_path('utbots_face_recognition')
     
         self.sub_enable = rospy.Subscriber("/utbots/vision/faces/train_done", String, self.callback_train_done)
         self.sub_enable = rospy.Subscriber("/utbots/vision/faces/new_face_done", String, self.callback_new_face_done)
@@ -68,19 +68,29 @@ class RecognitionTask:
             self.gotImg = True
 
     def mainLoop(self):
+        #self.pub_train_enable.publish("no")
+        #self.pub_recognize_enable.publish("no")
+
         #while rospy.is_shutdown() == False:
         self.pub_instructions.publish("begin")
         self.pub_new_face_enable.publish("yes")
-        time.sleep(1)
+        rospy.loginfo("[RECOGNIZE] New Face Node ENABLE SIGNAL")
+
+        time.sleep(5)
+
         self.pub_new_face_enable.publish("no")
+
+        rospy.loginfo("[RECOGNIZE] New Face Node DISABLE SIGNAL")
 
         while self.msg_new_face_done.data != "yes":
             pass
 
+        rospy.loginfo("[RECOGNIZE] Train Node ENABLE SIGNAL")
         self.pub_instructions.publish("train")
         self.pub_train_enable.publish("yes")
         time.sleep(1)
         self.pub_train_enable.publish("no")
+        rospy.loginfo("[RECOGNIZE] Train Node DISABLE SIGNAL")
 
         start_time = timeit.default_timer()
 
@@ -90,12 +100,12 @@ class RecognitionTask:
         end_time = timeit.default_timer()
 
         self.pub_instructions.publish("Go to the crowd")
-        while(end_time - start_time) < 60:
+        while(end_time - start_time) < 30:
             end_time = timeit.default_timer()
 
         self.pub_instructions.publish("Recognizing")
 
-
+        rospy.loginfo("[RECOGNIZE] Recognizing Node ENABLE SIGNAL")
         self.new_image = False
         self.pub_recognize_enable.publish("yes")
         time.sleep(1)
@@ -136,13 +146,15 @@ class RecognitionTask:
                 person_num += 1
             
         rospy.loginfo(f"Number of people | {person_num}")
-        c.drawString(100, textY0, f"Number of people | {person_num}")
+        c.drawString(200, textY0, f"Number of people | {person_num}")
         # Save the image as PNG
         cv2.imwrite(f"{self.package_path}/face.png", cv_img)
         c.drawImage(f"{self.package_path}/face.png", 100, 0, width=400, height=300)
 
         # Save the PDF file
         c.save()
+        self.pub_recognize_enable.publish("no")
+        rospy.loginfo("[RECOGNIZE] Recognizing Node DISABLE SIGNAL")
 
 def main():
     a = RecognitionTask()
