@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(face_recognition)
+project(utbots_face_recognition)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -208,6 +208,6 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-catkin_install_python(PROGRAMS src/train.py src/recognize.py src/new_face.py
+catkin_install_python(PROGRAMS src/train.py src/recognize.py src/new_face.py src/task.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
