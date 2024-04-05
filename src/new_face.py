@@ -7,6 +7,7 @@ from face_recognition.face_recognition_cli import image_files_in_folder
 import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
+from std_srvs.srv import Empty
 import cv2
 from cv_bridge import CvBridge
 import shutil
@@ -16,12 +17,11 @@ from std_msgs.msg import Bool
 # Add capability to search for a person by walking around the room, or at least looking around
 
 class PictureTaker:
-    def __init__(self, new_topic_rgbImg):
+    def __init__(self):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
         
         self.msg_enable = String()
-        self.msg_enable.data = "no"
 
         # OpenCV
         self.cv_img = None           # CvImage
@@ -29,15 +29,16 @@ class PictureTaker:
 
         # Publisher
         self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
-        self.pub_done = rospy.Publisher("/utbots/vision/faces/new_face_done", String, queue_size=1)
 
         # Subscribers
-        self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
+        self.sub_rgbImg = rospy.Subscriber(rospy.get_param("image_topic"), Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
-        self.sub_enable = rospy.Subscriber("/utbots/vision/faces/new_face_enable", String, self.callback_enable)
 
         # Subscriber variable 
         self.done_talking = String("yes")
+
+        # Service to add new face
+        new_face_service = rospy.Service('/utbots_face_recognition/add_new_face', Empty, self.add_new_face)
 
         # ROS node
         rospy.init_node('face_recognizer_new_person', anonymous=True)
@@ -57,15 +58,6 @@ class PictureTaker:
         self.n_neighbors = None
         #done = Bool
         #done.data = False
-        self.pub_done.publish("yes")
-
-    def callback_enable(self, msg):
-        self.msg_enable = msg
-        if self.msg_enable.data == "yes":
-            rospy.loginfo("[RECOGNIZE] Face Recognition New Face ENABLED")
-
-        else:
-            rospy.loginfo("[RECOGNIZE] Face Recognition New Face DISABLED")
 
     def callback_doneTalking(self, msg):
         self.done_talking = msg
@@ -192,27 +184,29 @@ class PictureTaker:
 
         #self.tts_publisher("You're done", "Necessary images are gathered")
 
+    def add_new_face(self, msg):
+        path = self.picture_path_maker()
+        self.picture_taker(path)
+
     def mainLoop(self):
         while rospy.is_shutdown() == False:
             # Controls speed
             self.loopRate.sleep()
             # Put the enable
-            if self.msg_enable.data == "yes":
-                self.pub_done.publish("no")
+            
+            
+            # TRANSFORMAR ISSO EM UM SERVIÇO
+            #if self.msg_enable.data == "yes":
                 # ESSE PRINT FAZ O PROGRAMA FUNCIONAR, SE ALGUÉM TIRAR EU VOU MATAR
-                print("here")
-                path = self.picture_path_maker()
-                self.picture_taker(path)
-            self.pub_done.publish("yes")
+            #    print("here")
+            #    path = self.picture_path_maker()
+            #    self.picture_taker(path)
 
 def execute():
     
-    program = PictureTaker(
-        "/usb_cam/image_raw")
-        #"/camera/rgb/image_color")
-    program.mainLoop()
-    
+    program = PictureTaker()
 
+    program.mainLoop()
 
 if __name__ == "__main__":
     execute()
