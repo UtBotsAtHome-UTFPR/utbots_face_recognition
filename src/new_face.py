@@ -20,8 +20,6 @@ class PictureTaker:
     def __init__(self):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
-        
-        self.msg_enable = String()
 
         # OpenCV
         self.cv_img = None           # CvImage
@@ -48,16 +46,6 @@ class PictureTaker:
 
         self.pic_quantity = 25
 
-        # Eventually update verbose for making debugging easier (when it uses voice commands and so on)
-        self.verbose = True # If set to True prints to the terminal when an image is unfit
-        self.should_face_crop = True # If set to True, crops the images being taken to have only a face on them
-
-        # Algorithm variables
-        self.names = []
-        self.face_encodings = []
-        self.n_neighbors = None
-        #done = Bool
-        #done.data = False
 
     def callback_doneTalking(self, msg):
         self.done_talking = msg
@@ -136,7 +124,7 @@ class PictureTaker:
             pass
 
     # Control for telling the user what to do for taking pictures
-    def pic_instructions(self, i, speak):
+    def pic_instructions(self, i):
 
         if i % 5 == 0:
             message = "forward"
@@ -149,37 +137,30 @@ class PictureTaker:
         if i % 5 == 4:
             message = "right"
 
-        if(speak):
-            self.tts_publisher(message)
+        self.tts_publisher(message)
 
         time.sleep(1.5)
 
     def picture_taker(self, path):
         
         i = 0
-        speak = True
         while(i < self.pic_quantity):
             
-            self.pic_instructions(i, speak)
+            self.pic_instructions(i)
 
             # Take in pictures for the new person and save them
             img = self.cv_img
             face_bounding_boxes = face_recognition.face_locations(img)            
 
+            # The library can crop the images during the training phase but this is about 20 to 30% faster
             if len(face_bounding_boxes) == 1:
-                if self.should_face_crop:
-                    # Weird coordinates because of top, left, bottom right order in bounding_boxes and top, bottom, left, right when cropping in cv2
-                    cv2.imwrite(path + "/" + str(i) + '.jpg', cv2.cvtColor(img[face_bounding_boxes[0][0]:face_bounding_boxes[0][2], face_bounding_boxes[0][3]:face_bounding_boxes[0][1]], cv2.COLOR_BGR2RGB))
-                else:
-                    cv2.imwrite(path + "/" + str(i) + '.jpg', cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-                speak = True
+                # Weird coordinates because of top, left, bottom right order in bounding_boxes and top, bottom, left, right when cropping in cv2
+                cv2.imwrite(path + "/" + str(i) + '.jpg', cv2.cvtColor(img[face_bounding_boxes[0][0]:face_bounding_boxes[0][2], face_bounding_boxes[0][3]:face_bounding_boxes[0][1]], cv2.COLOR_BGR2RGB))
 
             else:
                 i -= 1
-                
                 self.tts_publisher("Again", "image has no one")
-                
-                speak = False
+
             i += 1
 
         #self.tts_publisher("You're done", "Necessary images are gathered")
@@ -188,24 +169,14 @@ class PictureTaker:
         path = self.picture_path_maker()
         self.picture_taker(path)
 
+    # Just keeps the node running
     def mainLoop(self):
         while rospy.is_shutdown() == False:
-            # Controls speed
             self.loopRate.sleep()
-            # Put the enable
-            
-            
-            # TRANSFORMAR ISSO EM UM SERVIÇO
-            #if self.msg_enable.data == "yes":
-                # ESSE PRINT FAZ O PROGRAMA FUNCIONAR, SE ALGUÉM TIRAR EU VOU MATAR
-            #    print("here")
-            #    path = self.picture_path_maker()
-            #    self.picture_taker(path)
 
 def execute():
     
     program = PictureTaker()
-
     program.mainLoop()
 
 if __name__ == "__main__":
