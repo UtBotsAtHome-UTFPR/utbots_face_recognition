@@ -35,8 +35,8 @@ class PictureTaker:
         # Subscriber variable 
         self.done_talking = String("yes")
 
-        # Service to add new face
-        new_face_service = rospy.Service('/utbots_face_recognition/add_new_face', Empty, self.add_new_face)
+        # Services
+        self.new_face_service = rospy.Service('/utbots_face_recognition/add_new_face', Empty, self.add_new_face)
 
         # ROS node
         rospy.init_node('face_recognizer_new_person', anonymous=True)
@@ -65,6 +65,7 @@ class PictureTaker:
 
             self.tts_publisher("Let's begin", "Let's begin")
 
+            # Make it a parameter for rosservice to add many users
             name = "Operator"#input()
 
             path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name
