@@ -55,7 +55,7 @@ class PictureTaker:
         self.cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
         self.new_rgbImg = True
 
-    def picture_path_maker(self):
+    def picture_path_maker(self, name="Operator"):
         print("path maker")
 
         name = None

@@ -57,6 +57,8 @@ class FaceRecognizer():
         self.edited_image = None
         self.pub_image = None
 
+        self.load_train_data()
+
         self.mainLoop()
 
     def callback_rgbImg(self, msg):
@@ -151,8 +153,8 @@ class FaceRecognizer():
         if self.new_rgbImg:
                      
                 self.recognize()
-                #print(self.recognized_people.array)
-                if len(self.recognized_people.array) > 0: 
+
+                if len(self.recognized_people.array) != 0: 
                     self.pub_marked_people.publish(self.recognized_people)
                     self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
 
