@@ -36,7 +36,7 @@ class PictureTaker:
         self.done_talking = String("yes")
 
         # Services
-        self.new_face_service = rospy.Service('/utbots_face_recognition/add_new_face', Empty, self.add_new_face)
+        self.new_face_service = rospy.Service('/utbots_face_recognition/add_new_face', Empty, self.new_face_srv)
 
         # ROS node
         rospy.init_node('face_recognizer_new_person', anonymous=True)
@@ -160,15 +160,17 @@ class PictureTaker:
 
             else:
                 i -= 1
-                self.tts_publisher("Again", "image has no one")
+                self.tts_publisher("Again", "image has too many or too few people")
 
             i += 1
 
         #self.tts_publisher("You're done", "Necessary images are gathered")
 
-    def add_new_face(self, msg):
+    def new_face_srv(self, msg):
         path = self.picture_path_maker()
         self.picture_taker(path)
+
+        return []
 
     # Just keeps the node running
     def mainLoop(self):

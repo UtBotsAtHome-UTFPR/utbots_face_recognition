@@ -7,13 +7,16 @@
           <arg name="depth_registration" value="true" />
   </include>-->
 
-    <include file="$(find usb_cam)/launch/usb_cam-test.launch">
-    </include>-
+    <!--<include file="$(find usb_cam)/launch/usb_cam-test.launch">
+    </include>-->
 
     <param name="image_topic" value="/usb_cam/image_raw" />
 
+    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen"/>
+
     <node name="new_face" pkg="utbots_face_recognition" type="new_face.py" output="screen"/>
     <node name="train" pkg="utbots_face_recognition" type="train.py" output="screen"/>
+    <node name="recognize" pkg="utbots_face_recognition" type="recognize.py" output="screen"/>
 
   
   <!-- Darknet inference -->

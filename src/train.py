@@ -56,6 +56,8 @@ class Trainer:
 
         self.end_time = timeit.default_timer()
         rospy.loginfo("Training took %i seconds", self.end_time - self.start_time)
+        
+        return []
 
     def load_faces(self):
 

@@ -10,6 +10,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import rospkg
 
+
+''' Everything here is legacy and an example of how NOT to write a node, don't take inspiration from it. Sincerely, the main author '''
+
+
 class RecognitionTask:
     
     def __init__(self):
