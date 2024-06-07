@@ -98,7 +98,6 @@ class FaceRecognizer():
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
 
         self.pub_image = self.edited_image
-        self.new_img = True
     
     def draw_rec_on_faces(self, name, coordinates):
         img = self.edited_image

@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   sensor_msgs
+  actionlib_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -69,7 +70,13 @@ find_package(catkin REQUIRED COMPONENTS
 #   Action1.action
 #   Action2.action
 # )
-
+add_action_files(
+  DIRECTORY action
+  FILES Recognize.action
+)
+generate_messages(
+  DEPENDENCIES actionlib_msgs sensor_msgs  # Or other packages containing msgs
+)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
@@ -106,10 +113,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES face_recognition
-#  CATKIN_DEPENDS ros_msgs roscpp rospy
-#  DEPENDS system_lib
+  CATKIN_DEPENDS 
 )
 
 ###########
@@ -208,6 +212,6 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-catkin_install_python(PROGRAMS src/train.py src/recognize.py src/new_face.py src/task.py
+catkin_install_python(PROGRAMS src/train.py src/recognize.py src/new_face.py src/task.py src/recognize_action.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
