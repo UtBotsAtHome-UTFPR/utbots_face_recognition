@@ -3,7 +3,6 @@
 # Implementar a bt
 import rospy
 import actionlib
-import actionlib_tutorials.msg
 from utbots_face_recognition import msg as recognize_action
 from sensor_msgs.msg import Image, RegionOfInterest
 from vision_msgs.msg import Object, ObjectArray
@@ -18,7 +17,6 @@ import face_recognition
 class Recognize_Action(object):
 
     # create messages that are used to publish feedback/result
-    _feedback = actionlib_tutorials.msg.FibonacciFeedback()
     _result = recognize_action.RecognizeResult()
     
     def __init__(self, name, new_topic_rgbImg):
@@ -92,7 +90,9 @@ class Recognize_Action(object):
                 self.pub_marked_people.publish(self.recognized_people)
                 img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough")
                 self.pub_marked_imgs.publish(img)
-                self._as.set_succeeded(img)
+                action_img = recognize_action.RecognizeResult()
+                action_img.image = img
+                self._as.set_succeeded(action_img)
             
             else:
                 rospy.loginfo("[RECOGNIZE] No faces detected in image")
@@ -185,7 +185,7 @@ class Recognize_Action(object):
             self.loopRate.sleep()
         
 if __name__ == '__main__':
-    rospy.init_node('face_recognizer', anonymous=True)
+    rospy.init_node('recognition', anonymous=False)
 
     # Transformar em um parâmetro quando tivermos ROS 2 (O jeito em ROS 2 é diferente então não quis fazer agora)
     server = Recognize_Action(rospy.get_name(), 
