@@ -71,7 +71,6 @@ class Recognize_Action(object):
     def recognize_action(self, goal):
         # helper variables
         success = True
-        
         '''
         Since this action is very short and not looping we won't check preemption.
         Basically: this could've been a service, however, considering it's use case it was decided to use an action
