@@ -189,10 +189,10 @@ class PictureTaker:
                 i -= 1
                 self.tts_publisher("Again", "image has too many or too few people")
 
-            self.feedback.pics_taken = i + 1
-            self.feedback.image = self.msg_rgbImg
+            self.feedback.pics_taken.data = i + 1
+            self.feedback.image.data = self.msg_rgbImg.data
 
-            self._as.publish_feedback(self._feedback)
+            self._as.publish_feedback(self.feedback)
 
             i += 1
 
@@ -210,13 +210,13 @@ class PictureTaker:
 
         path = self.picture_path_maker(goal.name)
         
-        self.pic_quantity = goal.n_pictures
+        self.pic_quantity = goal.n_pictures.data
 
         # Maybe should check preemption here just in case? I can't be bothered
 
         self.picture_taker(path)
 
-        self.result = self.success
+        self.result.success.data = self.success
 
         self._as.set_succeeded(self.result)
 
