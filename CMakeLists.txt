@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   sensor_msgs
-  actionlib_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -70,13 +69,7 @@ find_package(catkin REQUIRED COMPONENTS
 #   Action1.action
 #   Action2.action
 # )
-add_action_files(
-  DIRECTORY action
-  FILES Recognize.action
-)
-generate_messages(
-  DEPENDENCIES actionlib_msgs sensor_msgs  # Or other packages containing msgs
-)
+
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES

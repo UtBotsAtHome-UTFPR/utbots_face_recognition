@@ -3,7 +3,8 @@
 # Implementar a bt
 import rospy
 import actionlib
-from utbots_face_recognition import msg as recognize_action
+#from utbots_face_recognition import msg as recognize_action
+import utbots_actions.msg
 from sensor_msgs.msg import Image, RegionOfInterest
 from vision_msgs.msg import Object, ObjectArray
 from std_msgs.msg import String
@@ -12,12 +13,13 @@ import os
 import pickle
 from cv_bridge import CvBridge
 import cv2
+import copy
 import face_recognition
 
 class Recognize_Action(object):
 
     # create messages that are used to publish feedback/result
-    _result = recognize_action.RecognizeResult()
+    _result = utbots_actions.msg.recognitionResult
     
     def __init__(self, name, new_topic_rgbImg):
         
@@ -55,7 +57,7 @@ class Recognize_Action(object):
         # Declaring the action.
         ''' This is the last step of the init phase to avoid accessing undeclared variables. Alternatively _as can be declared sooner, however, _as.start must take memory safety into consideration'''
         self._action_name = name
-        self._as = actionlib.SimpleActionServer(self._action_name, recognize_action.RecognizeAction, execute_cb=self.recognize_action, auto_start = False)
+        self._as = actionlib.SimpleActionServer(self._action_name, utbots_actions.msg.recognitionAction, execute_cb=self.recognize_action, auto_start = False)
         self._as.start()
 
         # Makes using 
@@ -89,9 +91,12 @@ class Recognize_Action(object):
                 self.pub_marked_people.publish(self.recognized_people)
                 img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough")
                 self.pub_marked_imgs.publish(img)
-                action_img = recognize_action.RecognizeResult()
-                action_img.image = img
-                self._as.set_succeeded(action_img)
+                action_res = utbots_actions.msg.recognitionResult()
+                action_res.people.array = self.recognized_people.array
+                #print(action_res.people.array)
+                action_res.image.data = img.data
+                action_res.success.data = True
+                self._as.set_succeeded(action_res)
             
             else:
                 rospy.loginfo("[RECOGNIZE] No faces detected in image")
@@ -136,7 +141,7 @@ class Recognize_Action(object):
 
         person.roi = bbox
         
-        person.class_.data = "Person"
+        person.category.data = "Person"
 
         person.id.data = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"
 
@@ -145,7 +150,7 @@ class Recognize_Action(object):
 
         self.draw_rec_on_faces(person.id.data, coordinates)
 
-        person.parent_img.data = self.msg_rgbImg
+        #person.parent_img.data = self.msg_rgbImg
 
         # Shows who has been found on the terminal window
         rospy.loginfo("[RECOGNIZE] " + person.id.data)
