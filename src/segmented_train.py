@@ -52,7 +52,7 @@ class Trainer:
         self.start_time = timeit.default_timer()
         
         self.load_faces()
-        self.train_data()
+        #self.train_data()
 
         self.end_time = timeit.default_timer()
         rospy.loginfo("Training took %i seconds", self.end_time - self.start_time)
@@ -63,6 +63,8 @@ class Trainer:
 
         rospy.loginfo("Loading faces for training")
         self.pub_speech.publish("Loading faces for training")
+
+        knn_clf = neighbors.KNeighborsClassifier(n_neighbors=9, algorithm=self.knn_algo, weights='distance')
 
         # Loop through each person in the training set
         for class_dir in os.listdir(self.train_dir):
@@ -78,6 +80,16 @@ class Trainer:
                 # Add face encoding for current image to the training set
                 self.face_encodings.append(face_recognition.face_encodings(image, known_face_locations=face_bounding_boxes)[0])
                 self.names.append(class_dir)
+
+                
+                knn_clf.fit([self.face_encodings[-1]], [self.names[-1]])
+
+        if self.model_save_path is not None:
+            with open(self.model_save_path, 'wb') as f:
+                pickle.dump(knn_clf, f)
+        
+        rospy.loginfo("Training complete")
+        self.pub_speech.publish("Training done")
 
     def train_data(self):
 
@@ -96,9 +108,6 @@ class Trainer:
         # Create and train the KNN classifier
         knn_clf = neighbors.KNeighborsClassifier(n_neighbors=self.n_neighbors, algorithm=self.knn_algo, weights='distance')
         knn_clf.fit(self.face_encodings, self.names)
-
-        self.face_encodings = []
-        self.names = []
 
         # Save the trained KNN classifier
         if self.model_save_path is not None:

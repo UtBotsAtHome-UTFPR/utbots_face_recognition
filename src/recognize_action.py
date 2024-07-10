@@ -17,9 +17,6 @@ import copy
 import face_recognition
 
 class Recognize_Action(object):
-
-    # create messages that are used to publish feedback/result
-    _result = utbots_actions.msg.recognitionResult
     
     def __init__(self, name, new_topic_rgbImg):
         
