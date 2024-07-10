@@ -14,7 +14,7 @@ class train_subprocess:
         data = json.load(f)
 
         self.train_dir = data["train_dir"]
-        self.model_save_path = data["model_save_path"]
+        self.model_save_dir = data["model_save_dir"]
         self.train_result = data["train_result_dir"]
         
         self.face_encodings = []
@@ -50,8 +50,8 @@ class train_subprocess:
         self.names = []
 
         # Save the trained KNN classifier
-        if self.model_save_path is not None:
-            with open(self.model_save_path, 'wb') as f:
+        if self.model_save_dir is not None:
+            with open(self.model_save_dir, 'wb') as f:
                 pickle.dump(knn_clf, f)
 
         with open(self.train_result, 'w') as f:

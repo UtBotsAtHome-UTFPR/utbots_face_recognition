@@ -20,7 +20,7 @@ class Trainer:
     def __init__(self, new_topic_rgbImg, save_name="trained_knn_model.clf", n: int=None):
 
         self.train_dir = os.path.realpath(os.path.dirname(__file__)) + "/../faces"
-        self.model_save_path = os.path.realpath(os.path.dirname(__file__)) + "/../trained_models/" + save_name
+        self.model_save_dir = os.path.realpath(os.path.dirname(__file__)) + "/../trained_models/" + save_name
         self.knn_algo = 'ball_tree'
 
         # OpenCV
@@ -101,8 +101,8 @@ class Trainer:
         self.names = []
 
         # Save the trained KNN classifier
-        if self.model_save_path is not None:
-            with open(self.model_save_path, 'wb') as f:
+        if self.model_save_dir is not None:
+            with open(self.model_save_dir, 'wb') as f:
                 pickle.dump(knn_clf, f)
         
         rospy.loginfo("Training complete")
