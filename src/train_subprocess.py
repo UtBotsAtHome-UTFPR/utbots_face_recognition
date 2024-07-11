@@ -5,7 +5,6 @@ import math
 import pickle
 from sklearn import neighbors
 import sys
-import json
 
 class train_subprocess:
 
