@@ -4,18 +4,17 @@ import face_recognition
 import math
 import pickle
 from sklearn import neighbors
+import sys
 import json
 
 class train_subprocess:
 
-    def __init__(self):
+    def __init__(self, train_dir: str, model_save_dir: str, train_result_dir: str):
         f = open("../subprocess_communication/train_goal.json")
 
-        data = json.load(f)
-
-        self.train_dir = data["train_dir"]
-        self.model_save_dir = data["model_save_dir"]
-        self.train_result = data["train_result_dir"]
+        self.train_dir = train_dir
+        self.model_save_dir = model_save_dir
+        self.train_result_dir = train_result_dir
         
         self.face_encodings = []
         self.names = []
@@ -54,10 +53,23 @@ class train_subprocess:
             with open(self.model_save_dir, 'wb') as f:
                 pickle.dump(knn_clf, f)
 
-        with open(self.train_result, 'w') as f:
+        with open(self.train_result_dir, 'w') as f:
             f.write(str("success"))
         
 if __name__ == "__main__":
-    object = train_subprocess()
+    file_ordenation = sys.argv
+
+    if len(file_ordenation) != 4:
+        print("Wrong number of arguments parsed to the function, system exiting with code: ")
+        sys.exit(1)
+
+    train_dir = file_ordenation[1]
+    model_save_dir = file_ordenation[2]
+    train_result_dir = file_ordenation[3]
+
+    object = train_subprocess(train_dir, model_save_dir, train_result_dir)
     object.load_faces()
     object.train_data()
+
+    # Default exit is 0, this is here to make it explicit
+    sys.exit(0)

@@ -65,6 +65,10 @@ class Trainer:
 
         self.start_time = timeit.default_timer()
 
+        # Set train_goal.json parameters
+
+        # Check on ~/projetos/apagar/src on how to call the function, check if it finished and terminate if needed. REMEMBER TO ADD PREEMPTION CHECK AND THE SLEEP SHOULD BE LOOPRATE SLEEP
+
         if len(goal.names) > 0:
             self.load_faces()
 
