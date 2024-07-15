@@ -2,7 +2,6 @@
 
 import math
 from sklearn import neighbors
-from std_srvs.srv import Empty
 import os
 import os.path
 import pickle
@@ -14,10 +13,11 @@ from std_msgs.msg import String
 from cv_bridge import CvBridge
 import timeit
 from std_msgs.msg import Bool
-
+import subprocess
+import sys
 import actionlib
 import utbots_actions.msg
-from generic_msgs.msg import StringArray
+
 
 class Trainer:
 
@@ -30,9 +30,6 @@ class Trainer:
         # OpenCV
         self.cv_img = None           # CvImage
         self.bridge = CvBridge()
-
-        # Services
-        self.train_service = rospy.Service('/utbots_face_recognition/train', Empty, self.train_srv)
 
         # Publishers
         self.pub_speech = rospy.Publisher("/robot_speech", String, queue_size=1)
@@ -56,7 +53,7 @@ class Trainer:
         self.feedback = utbots_actions.msg.trainFeedback()
 
         self._action_name = name
-        self._as = actionlib.SimpleActionServer(self._action_name, utbots_actions.msg.recognitionAction, execute_cb=self.train_action, auto_start = False)
+        self._as = actionlib.SimpleActionServer(self._action_name, utbots_actions.msg.trainAction, execute_cb=self.train_action, auto_start = False)
         self._as.start()
 
         self.mainLoop()
@@ -65,20 +62,46 @@ class Trainer:
 
         self.start_time = timeit.default_timer()
 
-        # Set train_goal.json parameters
+        script_name = os.path.realpath(os.path.dirname(__file__)) + "/train_subprocess.py"
 
-        # Check on ~/projetos/apagar/src on how to call the function, check if it finished and terminate if needed. REMEMBER TO ADD PREEMPTION CHECK AND THE SLEEP SHOULD BE LOOPRATE SLEEP
+        rospy.loginfo(script_name)
 
-        if len(goal.names) > 0:
-            self.load_faces()
+        process = subprocess.Popen([sys.executable, script_name] + [self.train_dir, self.model_save_path])
 
-        else:
-            self.load_faces()
+        rospy.loginfo('[TRAIN] Training the model')
+        
 
-        self.result.model.data(self.train_data())
+        while process.poll() is None:
+            if self._as.is_preempt_requested():
+                rospy.loginfo("[TRAIN] Action preempted")
+                self._as.set_preempted()
+                self.success = False
+                return
+            self.loopRate.sleep()
+            # Colocar aqui dentro a preempção
+
+        if process.poll() == 1:
+            rospy.logerr("[TRAIN] Wrong number of arguments parsed to the function, system exiting with code: ")
+            self._as.set_aborted()
+            return
+
+        elif process.poll() == 2:
+            rospy.logerr("[TRAIN] train_subprocess.py is badly named, path is wrong or does not exist")
+            self._as.set_aborted()
+            return
+
+        # Load the model as a string and set it as the result
+        #self.result.model.data(model)
 
         self.end_time = timeit.default_timer()
         rospy.loginfo("Training took %i seconds", self.end_time - self.start_time)
+
+        f = open(self.model_save_path, "r")
+        self.result.model.data = f.read() 
+
+        self.result.success.data = True
+
+        self._as.set_succeeded(self.result)
 
     
     # Service that performs the training phase whenever called
@@ -151,4 +174,4 @@ class Trainer:
 
 if __name__ == "__main__":
 
-    train = Trainer(rospy.get_name(), "/usb_cam/image_raw")
+    train = Trainer("train", "/usb_cam/image_raw")
