@@ -66,7 +66,7 @@ class Trainer:
 
         rospy.loginfo(script_name)
 
-        process = subprocess.Popen([sys.executable, script_name] + [self.train_dir, self.model_save_path])
+        process = subprocess.Popen([sys.executable, script_name, self.train_dir, self.model_save_path])
 
         rospy.loginfo('[TRAIN] Training the model')
         
@@ -96,8 +96,10 @@ class Trainer:
         self.end_time = timeit.default_timer()
         rospy.loginfo("Training took %i seconds", self.end_time - self.start_time)
 
-        f = open(self.model_save_path, "r")
-        self.result.model.data = f.read() 
+        with open(self.model_save_path, 'rb') as f:
+            knn_clf = pickle.load(f)
+
+        #self.result.model.data = pickle.dumps(knn_clf)
 
         self.result.success.data = True
 
