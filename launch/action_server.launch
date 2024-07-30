@@ -12,7 +12,16 @@
 
 
     <!-- Uncomment this if you want to use usb cam-->
-    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen"/>
+    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+      <param name="video_device" value="/dev/video0" />
+      <param name="image_width" value="640" />
+      <param name="image_height" value="480" />
+      <param name="pixel_format" value="yuyv" />
+      <param name="color_format" value="yuv422p" />
+      <param name="camera_frame_id" value="usb_cam" />
+      <param name="io_method" value="mmap"/>
+    </node>
+
 
     <node name="new_face" pkg="utbots_face_recognition" type="new_face_action.py" output="screen"/>
     <node name="train" pkg="utbots_face_recognition" type="train_action.py" output="screen"/>
