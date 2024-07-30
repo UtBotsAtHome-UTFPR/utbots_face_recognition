@@ -9,7 +9,6 @@ import sys
 class train_subprocess:
 
     def __init__(self, train_dir: str, model_save_dir: str):
-        f = open("../subprocess_communication/train_goal.json")
 
         self.train_dir = train_dir
         self.model_save_dir = model_save_dir
@@ -57,7 +56,7 @@ if __name__ == "__main__":
     # If we ever add a list of people that should be trained add their names in the next few argv
     if len(file_ordenation) != 3:
         print("Wrong number of arguments parsed to the function, system exiting with code: ")
-        sys.exit(1)
+        sys.exit(len(file_ordenation))
 
     train_dir = file_ordenation[1]
     model_save_dir = file_ordenation[2]
