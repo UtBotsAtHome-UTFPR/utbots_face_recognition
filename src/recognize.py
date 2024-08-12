@@ -12,7 +12,7 @@ import pickle
 from vision_msgs.msg import Object, ObjectArray
 import cv2
 from std_msgs.msg import String
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty, SetBoolResponse
 
 class FaceRecognizer():
 

@@ -17,6 +17,7 @@ import subprocess
 import sys
 import actionlib
 import utbots_actions.msg
+import base64
 
 
 class Trainer:
@@ -99,7 +100,11 @@ class Trainer:
         with open(self.model_save_path, 'rb') as f:
             knn_clf = pickle.load(f)
 
-        #self.result.model.data = pickle.dumps(knn_clf)
+        serialized_model = pickle.dumps(knn_clf)
+
+        encoded_model = base64.b64encode(serialized_model).decode('utf-8')
+
+        self.result.model.data = encoded_model
 
         self.result.success.data = True
 
