@@ -63,7 +63,7 @@ class Trainer:
 
         self.start_time = timeit.default_timer()
 
-        script_name = os.path.realpath(os.path.dirname(__file__)) + "/train_subprocess.py"
+        script_name = os.path.realpath(os.path.dirname(__file__)) + "/train_subprocess.py"  
 
         rospy.loginfo(script_name)
 

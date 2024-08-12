@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/laser/catkin_ws/src/utbots_face_recognition/build/devel/setup.sh
