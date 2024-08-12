@@ -1,8 +1,0 @@
-prefix=/home/laser/catkin_ws/src/utbots_face_recognition/build/devel
-
-Name: utbots_face_recognition
-Description: Description of utbots_face_recognition
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
