@@ -84,19 +84,19 @@ class Recognize_Action(object):
             rospy.loginfo("[RECOGNIZE] Recognizing image")
             self.recognize()
 
-            if len(self.recognized_people.array) != 0: 
+            detect_count = len(self.recognized_people.array)
+
+            if (detect_count != 0 and goal.ExpectedFaces.data == 0) or (detect_count == goal.ExpectedFaces.data): 
                 self.pub_marked_people.publish(self.recognized_people)
                 img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough")
                 #self.pub_marked_imgs.publish(img)# Stopped working at some point
                 action_res = utbots_actions.msg.recognitionResult()
-                action_res.people.array = self.recognized_people.array
-                #print(action_res.people.array)
-                action_res.image.data = img.data
-                action_res.success.data = True
+                action_res.People.array = self.recognized_people.array
+                #action_res.image.data = img.data
                 self._as.set_succeeded(action_res)
             
             else:
-                rospy.loginfo("[RECOGNIZE] No faces detected in image")
+                rospy.loginfo("[RECOGNIZE] Wrong number of faces detected in image")
                 self._as.set_aborted()
         
         else:
@@ -161,6 +161,8 @@ class Recognize_Action(object):
         self.face_locations = face_recognition.face_locations(self.cv_img)
         self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
+        self.recognized_people.array.clear()
+
         if len(self.face_locations) == 0:
             #self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
             #self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(self.pub_image, encoding="passthrough"))
@@ -170,7 +172,7 @@ class Recognize_Action(object):
         closest_distances = self.knn_clf.kneighbors(self.face_encodings, n_neighbors=1)
         are_matches = [closest_distances[0][i][0] <= 0.6 for i in range(len(self.face_locations))]
   
-        self.recognized_people.array.clear()
+        
 
         rospy.loginfo("[RECOGNIZE] Recognized people are: ")
         # Adds each person in the image to recognized_people and alters img to show them
