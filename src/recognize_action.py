@@ -84,7 +84,7 @@ class Recognize_Action(object):
             rospy.loginfo("[RECOGNIZE] Recognizing image")
             self.recognize()
 
-            detect_count = len(self.recognized_people.array)
+            detect_count = sum(1 for name in self.recognized_people.array if name != "Unknown")
 
             if (detect_count != 0 and goal.ExpectedFaces.data == 0) or (detect_count == goal.ExpectedFaces.data): 
                 self.pub_marked_people.publish(self.recognized_people)
