@@ -217,7 +217,8 @@ class PictureTaker:
         if self.success:
             self._as.set_succeeded(self.result)
         
-        self._as.set_aborted()
+        else:
+            self._as.set_aborted()
 
     # Just keeps the node running
     def mainLoop(self):

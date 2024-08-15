@@ -36,7 +36,7 @@ class Recognize_Action(object):
 
         # Publisher
         self.pub_marked_people = rospy.Publisher("/utbots/vision/faces/recognized", ObjectArray, queue_size=1)  # Bounding boxes for their faces with name
-        self.pub_marked_imgs = rospy.Publisher("/utbots/vision/image/marked", Image, queue_size=1)
+        #self.pub_marked_imgs = rospy.Publisher("/utbots/vision/image/marked", Image, queue_size=1)# Stopped working at some point
 
         # Publisher variables
         self.recognized_people = ObjectArray()
@@ -87,7 +87,7 @@ class Recognize_Action(object):
             if len(self.recognized_people.array) != 0: 
                 self.pub_marked_people.publish(self.recognized_people)
                 img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough")
-                self.pub_marked_imgs.publish(img)
+                #self.pub_marked_imgs.publish(img)# Stopped working at some point
                 action_res = utbots_actions.msg.recognitionResult()
                 action_res.people.array = self.recognized_people.array
                 #print(action_res.people.array)
@@ -110,6 +110,7 @@ class Recognize_Action(object):
         with open(file_directory, 'rb') as f:
             self.knn_clf = pickle.load(f)
 
+    # Stopped working at some point
     def draw_rec_on_faces(self, name, coordinates):
         img = self.edited_image
 
@@ -145,7 +146,7 @@ class Recognize_Action(object):
         # Coordinates of the face in top, bottom, left, right order
         coordinates = [bbox.y_offset, bbox.y_offset + bbox.height, bbox.x_offset, bbox.x_offset + bbox.width]
 
-        self.draw_rec_on_faces(person.id.data, coordinates)
+        #self.draw_rec_on_faces(person.id.data, coordinates) # Stopped working at some point
 
         #person.parent_img.data = self.msg_rgbImg
 
@@ -162,7 +163,7 @@ class Recognize_Action(object):
 
         if len(self.face_locations) == 0:
             #self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
-            self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(self.pub_image, encoding="passthrough"))
+            #self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(self.pub_image, encoding="passthrough"))
             return 
 
         # Calculates which person is more similar to each face
