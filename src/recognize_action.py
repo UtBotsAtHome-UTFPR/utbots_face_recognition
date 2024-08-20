@@ -12,6 +12,7 @@ from cv_bridge import CvBridge
 import cv2
 import copy
 import face_recognition
+import base64
 
 class Recognize_Action(object):
     
@@ -67,8 +68,11 @@ class Recognize_Action(object):
 
         # publish info to the console for the user
         rospy.loginfo("[RECOGNIZE] Loading knn trained data model")
-        self.load_train_data()
-
+        if goal.Model.data:
+            decoded_model = base64.b64decode(goal.Model.data)
+            self.knn_clf = pickle.loads(decoded_model)
+        else:
+            self.load_train_data()
         
         if self.new_rgbImg:
             
