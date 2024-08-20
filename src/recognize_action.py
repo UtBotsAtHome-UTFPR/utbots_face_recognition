@@ -36,7 +36,7 @@ class Recognize_Action(object):
 
         # Publisher
         self.pub_marked_people = rospy.Publisher("/utbots/vision/faces/recognized", ObjectArray, queue_size=1)  # Bounding boxes for their faces with name
-        #self.pub_marked_imgs = rospy.Publisher("/utbots/vision/image/marked", Image, queue_size=1)# Stopped working at some point
+        self.pub_marked_imgs = rospy.Publisher("/utbots/vision/image/marked", Image, queue_size=1)
 
         # Publisher variables
         self.recognized_people = ObjectArray()
@@ -81,18 +81,21 @@ class Recognize_Action(object):
 
         
         if self.new_rgbImg:
+            
+            self.draw_img = self.cv_img.copy()
+
             rospy.loginfo("[RECOGNIZE] Recognizing image")
             self.recognize()
 
-            detect_count = sum(1 for name in self.recognized_people.array if name != "Unknown")
+            detect_count = sum(1 for name in self.recognized_people.array if name.id.data != "Unknown")
 
             if (detect_count != 0 and goal.ExpectedFaces.data == 0) or (detect_count == goal.ExpectedFaces.data): 
                 self.pub_marked_people.publish(self.recognized_people)
-                img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough")
-                #self.pub_marked_imgs.publish(img)# Stopped working at some point
+                img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.draw_img, cv2.COLOR_BGR2RGB), encoding="passthrough")
+                self.pub_marked_imgs.publish(img)
                 action_res = utbots_actions.msg.recognitionResult()
                 action_res.People.array = self.recognized_people.array
-                #action_res.image.data = img.data
+                #action_res.image.data = img.data this field was removed, kept here for clarity
                 self._as.set_succeeded(action_res)
             
             else:
@@ -112,7 +115,7 @@ class Recognize_Action(object):
 
     # Stopped working at some point
     def draw_rec_on_faces(self, name, coordinates):
-        img = self.edited_image
+        img = self.edited_image.copy()
 
         top = coordinates[0]
         bottom = coordinates[1]
@@ -120,12 +123,15 @@ class Recognize_Action(object):
         right = coordinates[3]
 
         # Draw a box around the face
-        cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
+        cv2.rectangle(self.draw_img, (left, top), (right, bottom), (0, 0, 255), 2)
 
         # Draw a label with a name below the face
-        cv2.rectangle(img, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+        cv2.rectangle(self.draw_img, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
         font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(img, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+        cv2.putText(self.draw_img, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+        
+        #pub_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), encoding="passthrough")
+        #self.pub_marked_imgs.publish(pub_img)
 
     def person_setter(self, i, is_match):
         person = Object()
@@ -146,7 +152,7 @@ class Recognize_Action(object):
         # Coordinates of the face in top, bottom, left, right order
         coordinates = [bbox.y_offset, bbox.y_offset + bbox.height, bbox.x_offset, bbox.x_offset + bbox.width]
 
-        #self.draw_rec_on_faces(person.id.data, coordinates) # Stopped working at some point
+        self.draw_rec_on_faces(person.id.data, coordinates) # Stopped working at some point
 
         #person.parent_img.data = self.msg_rgbImg
 
