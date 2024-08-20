@@ -1,9 +1,6 @@
 #! /usr/bin/env python
-# Implementar o recognize action_server
-# Implementar a bt
 import rospy
 import actionlib
-#from utbots_face_recognition import msg as recognize_action
 import utbots_actions.msg
 from sensor_msgs.msg import Image, RegionOfInterest
 from vision_msgs.msg import Object, ObjectArray
@@ -27,10 +24,6 @@ class Recognize_Action(object):
         # Flags
         self.new_rgbImg = False
 
-        # Messages
-        self.msg_enable = String()
-        self.msg_enable.data = "no"
-
         # Subscriber
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
 
@@ -40,19 +33,16 @@ class Recognize_Action(object):
 
         # Publisher variables
         self.recognized_people = ObjectArray()
-        self.marked_img = Image()
 
         # Algorithm variables
         self.face_encodings = []
 
         # Image that shows recognition
         self.edited_image = None
-        self.pub_image = None
 
         self.load_train_data()
 
         # Declaring the action.
-        ''' This is the last step of the init phase to avoid accessing undeclared variables. Alternatively _as can be declared sooner, however, _as.start must take memory safety into consideration'''
         self._action_name = name
         self._as = actionlib.SimpleActionServer(self._action_name, utbots_actions.msg.recognitionAction, execute_cb=self.recognize_action, auto_start = False)
         self._as.start()
@@ -185,8 +175,6 @@ class Recognize_Action(object):
         self.edited_image = self.cv_img
         for i in range(len(are_matches)):
             self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
-
-        self.pub_image = self.edited_image
 
     def mainLoop(self):
         rospy.loginfo("[RECOGNIZE] Running recognition system")
