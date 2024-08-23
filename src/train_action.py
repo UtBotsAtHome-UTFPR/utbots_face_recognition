@@ -1,5 +1,4 @@
-# Node for training the network for a new person
-
+#!/usr/bin/venv_utbots_face_recognition/bin/python
 import math
 from sklearn import neighbors
 import os

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/venv_utbots_face_recognition/bin/python
 import rospy
 import actionlib
 import utbots_actions.msg

@@ -1,5 +1,4 @@
-# AJUSTAR self.pic_quantity PARA A COMPETIÇÃO (NO NUC)
-
+#!/usr/bin/venv_utbots_face_recognition/bin/python
 import os
 import os.path
 import face_recognition
