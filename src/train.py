@@ -109,21 +109,6 @@ class Trainer:
 
         self._as.set_succeeded(self.result)
 
-    
-    # Service that performs the training phase whenever called
-    def train_srv(self, msg):
-        self.start_time = timeit.default_timer()
-        
-        self.load_faces()
-        self.train_data()
-
-        self.end_time = timeit.default_timer()
-        rospy.loginfo("Training took %i seconds", self.end_time - self.start_time)
-        
-        self.result.success.data = True
-
-        self._as.set_succeeded(self.result)
-
     def load_faces(self, names = None):
 
         rospy.loginfo("Loading faces for training")

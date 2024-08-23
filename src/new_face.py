@@ -6,7 +6,6 @@ from face_recognition.face_recognition_cli import image_files_in_folder
 import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
-from std_srvs.srv import Empty
 import cv2
 from cv_bridge import CvBridge
 import shutil
@@ -42,9 +41,6 @@ class PictureTaker:
 
         # Subscriber variable 
         self.done_talking = String("yes")
-
-        # Services
-        self.new_face_service = rospy.Service('/utbots_face_recognition/add_new_face', Empty, self.new_face_srv)
 
         # ROS node
         rospy.init_node('new_face', anonymous=True)
@@ -196,12 +192,6 @@ class PictureTaker:
             i += 1
 
         #self.tts_publisher("You're done", "Necessary images are gathered")
-
-    def new_face_srv(self, msg):
-        path = self.picture_path_maker()
-        self.picture_taker(path)
-
-        return []
     
     def new_face_action(self, goal):
 
