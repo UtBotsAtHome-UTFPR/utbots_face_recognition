@@ -1,5 +1,4 @@
-# AJUSTAR self.pic_quantity PARA A COMPETIÇÃO (NO NUC)
-
+#!/usr/bin/venv_utbots_face_recognition/bin/python
 import os
 import os.path
 import face_recognition
@@ -13,6 +12,9 @@ from cv_bridge import CvBridge
 import shutil
 import time
 from std_msgs.msg import Bool
+import actionlib
+
+import utbots_actions.msg
 
 # Add capability to search for a person by walking around the room, or at least looking around
 
@@ -29,7 +31,13 @@ class PictureTaker:
         self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
 
         # Subscribers
-        self.sub_rgbImg = rospy.Subscriber(rospy.get_param("image_topic"), Image, self.callback_rgbImg)
+
+        try:
+            img_topic = rospy.get_param("image_topic")
+        except:
+            img_topic = "/usb_cam/image_raw"
+
+        self.sub_rgbImg = rospy.Subscriber(img_topic, Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
 
         # Subscriber variable 
@@ -39,10 +47,18 @@ class PictureTaker:
         self.new_face_service = rospy.Service('/utbots_face_recognition/add_new_face', Empty, self.new_face_srv)
 
         # ROS node
-        rospy.init_node('face_recognizer_new_person', anonymous=True)
+        rospy.init_node('new_face', anonymous=True)
+
+        # Action
+        self.goal = utbots_actions.msg.new_faceGoal()
+        self.result = utbots_actions.msg.new_faceResult()
+        self.feedback = utbots_actions.msg.new_faceFeedback()
+
+        self._as = actionlib.SimpleActionServer('new_face', utbots_actions.msg.new_faceAction, execute_cb=self.new_face_action, auto_start = False)
+        self._as.start()
         
         # Time
-        self.loopRate = rospy.Rate(30)
+        self.loopRate = rospy.Rate(5)
 
         self.pic_quantity = 25
 
@@ -56,7 +72,8 @@ class PictureTaker:
         self.new_rgbImg = True
 
     def picture_path_maker(self, name="Operator"):
-        print("path maker")
+        
+        rospy.loginfo("[NEW_FACE] Creating path for pictures")
 
         name = None
         path = None
@@ -103,6 +120,8 @@ class PictureTaker:
                     close = input()
                     if close == "y" or input == "Y":
                         exit(1)
+            
+            rospy.loginfo("[NEW_FACE] Path created")
            
 
         #self.tts_publisher("Ok. Let's begin", "Created path for saving images")
@@ -146,6 +165,13 @@ class PictureTaker:
         
         i = 0
         while(i < self.pic_quantity):
+
+            self.success = True
+            if self._as.is_preempt_requested():
+                rospy.loginfo("[NEW_FACE] Action preempted")
+                self._as.set_preempted()
+                self.success = False
+                break
             
             self.pic_instructions(i)
 
@@ -162,6 +188,11 @@ class PictureTaker:
                 i -= 1
                 self.tts_publisher("Again", "image has too many or too few people")
 
+            self.feedback.pics_taken.data = i + 1
+            self.feedback.image.data = self.msg_rgbImg.data
+
+            self._as.publish_feedback(self.feedback)
+
             i += 1
 
         #self.tts_publisher("You're done", "Necessary images are gathered")
@@ -171,6 +202,22 @@ class PictureTaker:
         self.picture_taker(path)
 
         return []
+    
+    def new_face_action(self, goal):
+
+        self.success = False
+
+        path = self.picture_path_maker(goal.name)
+        
+        self.pic_quantity = goal.n_pictures.data
+
+        self.picture_taker(path)
+
+        if self.success:
+            self._as.set_succeeded(self.result)
+        
+        else:
+            self._as.set_aborted()
 
     # Just keeps the node running
     def mainLoop(self):

@@ -23,9 +23,9 @@
     </node>
 
 
-    <node name="new_face" pkg="utbots_face_recognition" type="new_face_action.py" output="screen"/>
-    <node name="train" pkg="utbots_face_recognition" type="train_action.py" output="screen"/>
-    <node name="recognize" pkg="utbots_face_recognition" type="recognize_action.py" output="screen"/>
+    <node name="new_face" pkg="utbots_face_recognition" type="new_face.py" output="screen"/>
+    <node name="train" pkg="utbots_face_recognition" type="train.py" output="screen"/>
+    <node name="recognize" pkg="utbots_face_recognition" type="recognize.py" output="screen"/>
 
   
   <!-- Darknet inference -->
