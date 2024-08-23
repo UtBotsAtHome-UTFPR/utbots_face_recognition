@@ -1,66 +1,53 @@
-# utbots_face_recognition basic guide
+# Face Recognition
+
+- ROS package that applies [face_recognition](https://pypi.org/project/face-recognition/)
+- Tested Kinect V1 RGB and usb_cam
+- For voice commands one must go to the [repository](https://github.com/UtBotsAtHome-UTFPR/utbots_voice?tab=readme-ov-file) and configure tts.
 
 ## Installation
 
-Main dependencies:
+### Building
 
 ```bash
-pip install face-recognition
-pip install numpy
-pip install pickle
-pip install opencv-python
-pip install -U scikit-learn
-sudo apt-get install python-catkin-tools python3-dev
+cd catkin_ws/src
+git clone https://github.com/UtBotsAtHome-UTFPR/utbots_face_recognition.git
+cd ..
+catkin_make
 ```
 
+### Dependencies
+
+This package depends on [freenect_launch](https://github.com/ros-drivers/freenect_stack) or [usb_cam](http://wiki.ros.org/usb_cam) and runs on python.
+
+The code runs on Python 3.8 and you must use a virtualenv (Install with `pip install virtualenv`) with the path `/usr/bin/venv_utbots_face_recognition/bin/python` as the node expects its existence to run. Install the requirements:
+
 ```bash
-cd ~/catkin_ws/src
-git clone --recurse-submodules https://github.com/UtBotsAtHome-UTFPR/utbots_vision.git
-git clone --recurse-submodules https://github.com/UtBotsAtHome-UTFPR/utbots_voice.git
+cd /usr/bin
+sudo python3 -m virtualenv venv_utbots_face_recognition --python=$(which python3)
+roscd utbots_face_recognition/src
+/usr/bin/venv_utbots_face_recognition/bin/python -m pip install -r requirements.txt
 ```
 
 For utbots voice one must go to the [repository](https://github.com/UtBotsAtHome-UTFPR/utbots_voice?tab=readme-ov-file) and configure tts.
 
-Installing the package.
+## Running
+
+First, to run on usb:
 
 ```bash
-cd ~/catkin_ws/src
-git clone https://github.com/UtBotsAtHome-UTFPR/utbots_face_recognition.git
-cd ..
-catkin_make
-source devel/setup.bash
+roslaunch utbots_face_recognition usb_action_server.launch
 ```
 
-## Code guide for last minute changes
+To run on kinect:
 
-### Adding a new face
-
-#### Adding multiple operator
-
-One must go inside `picture_path_maker()` and comment the line that sets the operator name to be "operator" and change it for whatever may be of use. Alternatively, the `add_new_face` service can be changed to receive a string with the name as a parameter.
-
-### Training phase
-
-#### Changing k value
-
-Update `self.n_neighbors` value to be the desired quantity. More will give better results to a certain point.
-
-### Recognize
-
-#### Constant recognition
-
-Add the following code to the mainLoop.
-
-```python
-self.recognize()
-
-if len(self.recognized_people.array) != 0: 
-    self.pub_marked_people.publish(self.recognized_people)
-    self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
+```bash
+roslaunch utbots_face_recognition freenect_action_server.launch
 ```
 
-And ideally an enable flag to start and stop if needed.
+## Actions
 
-#### Adding new people
-
-In case there is the need for constant recognition alongside adding new people `load_train_data` must be called in the enable callback to load the training data.
+```xml
+new_face_action
+train.action
+recognition.action
+```

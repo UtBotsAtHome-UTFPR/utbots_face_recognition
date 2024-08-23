@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+
+  <param name="image_topic" value="/usb_cam/image_raw" />
+
+  <include file="$(find freenect_launch)/launch/freenect.launch">
+    <arg name="depth_registration" value="true" />
+  </include>
+
+    <include file="$(find utbots_face_recognition)/launch/action_server.launch"/>
+  
+</launch>
