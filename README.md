@@ -26,6 +26,9 @@ cd /usr/bin
 sudo python3 -m virtualenv venv_utbots_face_recognition --python=$(which python3)
 roscd utbots_face_recognition/src
 /usr/bin/venv_utbots_face_recognition/bin/python -m pip install -r requirements.txt
+cd
+sudo rosdep init
+rosdep install --from-paths src --ignore-src -r -y
 ```
 
 For utbots voice one must go to the [repository](https://github.com/UtBotsAtHome-UTFPR/utbots_voice?tab=readme-ov-file) and configure tts.
