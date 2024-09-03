@@ -17,7 +17,7 @@ catkin_make
 
 ### Dependencies
 
-This package depends on [freenect_launch](https://github.com/ros-drivers/freenect_stack) or [usb_cam](http://wiki.ros.org/usb_cam) and runs on python.
+This package depends on [freenect_launch](https://github.com/ros-drivers/freenect_stack) or [usb_cam](http://wiki.ros.org/usb_cam) and runs on python, as well as some official ROS dependencies.
 
 The code runs on Python 3.8 and you must use a virtualenv (Install with `pip install virtualenv`) with the path `/usr/bin/venv_utbots_face_recognition/bin/python` as the node expects its existence to run. Install the requirements:
 
