@@ -84,7 +84,7 @@ class Recognize_Action(object):
 
             detect_count = sum(1 for name in self.recognized_people.bounding_boxes if name.id != "Unknown")
 
-            if (detect_count != 0 and goal.ExpectedFaces.data == 0) or (detect_count == goal.ExpectedFaces.data): 
+            if (detect_count != 0 and goal.ExpectedFaces.data == 0) or (detect_count == goal.ExpectedFaces.data and detect_count != 0): 
                 self.pub_marked_people.publish(self.recognized_people)
                 img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.draw_img, cv2.COLOR_BGR2RGB), encoding="passthrough")
                 self.pub_marked_imgs.publish(img)
@@ -211,5 +211,5 @@ if __name__ == '__main__':
     # Transformar em um parâmetro quando tivermos ROS 2 (O jeito em ROS 2 é diferente então não quis fazer agora)
     server = Recognize_Action(rospy.get_name(), 
         #"/camera/rgb/image_color")
-        "/usb_cam/image_raw")
+        "/camera/rgb/image_color")
     rospy.spin()

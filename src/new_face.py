@@ -34,7 +34,7 @@ class PictureTaker:
         try:
             img_topic = rospy.get_param("image_topic")
         except:
-            img_topic = "/usb_cam/image_raw"
+            img_topic = "/camera/rgb/image_color"
 
         self.sub_rgbImg = rospy.Subscriber(img_topic, Image, self.callback_rgbImg)
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
