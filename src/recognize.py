@@ -4,6 +4,7 @@ import actionlib
 import utbots_actions.msg
 from sensor_msgs.msg import Image, RegionOfInterest
 from vision_msgs.msg import Object, ObjectArray
+from vision_msgs.msg import BoundingBox, BoundingBoxes
 from std_msgs.msg import String
 
 import os
@@ -29,11 +30,11 @@ class Recognize_Action(object):
         self.sub_rgbImg = rospy.Subscriber(new_topic_rgbImg, Image, self.callback_rgbImg)
 
         # Publisher
-        self.pub_marked_people = rospy.Publisher("/utbots/vision/faces/recognized", ObjectArray, queue_size=1)  # Bounding boxes for their faces with name
+        self.pub_marked_people = rospy.Publisher("/utbots/vision/faces/recognized", BoundingBoxes, queue_size=1)  # Bounding boxes for their faces with name
         self.pub_marked_imgs = rospy.Publisher("/utbots/vision/image/marked", Image, queue_size=1)
 
         # Publisher variables
-        self.recognized_people = ObjectArray()
+        self.recognized_people = BoundingBoxes()
 
         # Algorithm variables
         self.face_encodings = []
@@ -81,14 +82,16 @@ class Recognize_Action(object):
             rospy.loginfo("[RECOGNIZE] Recognizing image")
             self.recognize()
 
-            detect_count = sum(1 for name in self.recognized_people.array if name.id.data != "Unknown")
+            detect_count = sum(1 for name in self.recognized_people.bounding_boxes if name.id != "Unknown")
 
             if (detect_count != 0 and goal.ExpectedFaces.data == 0) or (detect_count == goal.ExpectedFaces.data): 
                 self.pub_marked_people.publish(self.recognized_people)
                 img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.draw_img, cv2.COLOR_BGR2RGB), encoding="passthrough")
                 self.pub_marked_imgs.publish(img)
                 action_res = utbots_actions.msg.recognitionResult()
-                action_res.People.array = self.recognized_people.array
+                action_res.People.bounding_boxes = self.recognized_people.bounding_boxes
+                #rospy.loginfo(self.recognized_people.bounding_boxes[0])
+                action_res.Image = img
                 #action_res.image.data = img.data this field was removed, kept here for clarity
                 self._as.set_succeeded(action_res)
             
@@ -128,32 +131,48 @@ class Recognize_Action(object):
         #self.pub_marked_imgs.publish(pub_img)
 
     def person_setter(self, i, is_match):
-        person = Object()
+        person = BoundingBox()
+
+        '''float64 probability
+            int64 xmin
+            int64 ymin
+            int64 xmax
+            int64 ymax
+            int16 id
+            string Class'''
 
         # Face locations saves the positions as: top, right, bottom, left
-        bbox = RegionOfInterest()
-        bbox.x_offset = self.face_locations[i][3]
+        bbox = BoundingBox()
+        
+        bbox.xmin = self.face_locations[i][3]
+        bbox.xmax = self.face_locations[i][1]
+        bbox.ymin = self.face_locations[i][0]
+        bbox.ymax = self.face_locations[i][2]
+
+        bbox.Class = 'Person'
+        bbox.id = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"
+        '''bbox.x_offset = self.face_locations[i][3]
         bbox.y_offset = self.face_locations[i][0]
         bbox.height = self.face_locations[i][2] - self.face_locations[i][0]
-        bbox.width = self.face_locations[i][1] - self.face_locations[i][3]
+        bbox.width = self.face_locations[i][1] - self.face_locations[i][3]'''
 
-        person.roi = bbox
+        '''person.roi = bbox
         
         person.category.data = "Person"
 
-        person.id.data = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"
+        person.id.data = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"'''
 
         # Coordinates of the face in top, bottom, left, right order
-        coordinates = [bbox.y_offset, bbox.y_offset + bbox.height, bbox.x_offset, bbox.x_offset + bbox.width]
+        coordinates = [bbox.ymin, bbox.ymax, bbox.xmin, bbox.xmax]
 
-        self.draw_rec_on_faces(person.id.data, coordinates) # Stopped working at some point
+        self.draw_rec_on_faces(bbox.id, coordinates) # Stopped working at some point
 
         #person.parent_img.data = self.msg_rgbImg
 
         # Shows who has been found on the terminal window
-        rospy.loginfo("[RECOGNIZE] " + person.id.data)
+        rospy.loginfo("[RECOGNIZE] " + bbox.id)
         
-        return person
+        return bbox
 
     def recognize(self):
         self.pub_image = self.cv_img
@@ -161,7 +180,7 @@ class Recognize_Action(object):
         self.face_locations = face_recognition.face_locations(self.cv_img)
         self.face_encodings = face_recognition.face_encodings(self.cv_img, self.face_locations)
 
-        self.recognized_people.array.clear()
+        self.recognized_people.bounding_boxes.clear()
 
         if len(self.face_locations) == 0:
             #self.pub_marked_imgs.publish(self.bridge.cv2_to_imgmsg(cv2.cvtColor(self.pub_image, cv2.COLOR_BGR2RGB), encoding="passthrough"))
@@ -178,7 +197,7 @@ class Recognize_Action(object):
         # Adds each person in the image to recognized_people and alters img to show them
         self.edited_image = self.cv_img
         for i in range(len(are_matches)):
-            self.recognized_people.array.append(self.person_setter(i, are_matches[i]))
+            self.recognized_people.bounding_boxes.append(self.person_setter(i, are_matches[i]))
 
     def mainLoop(self):
         rospy.loginfo("[RECOGNIZE] Running recognition system")
