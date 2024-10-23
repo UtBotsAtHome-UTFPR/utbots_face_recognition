@@ -76,7 +76,7 @@ class PictureTaker:
         
         while(not name):
 
-            self.tts_publisher("Let's begin", "Let's begin")
+            self.tts_publisher("Let's begin, please move around a little while keeping your face towards the camera", "Let's begin")
 
             # Make it a parameter for rosservice to add many users
             name = "Operator"#input()
@@ -153,7 +153,7 @@ class PictureTaker:
         if i % 5 == 4:
             message = "right"
 
-        self.tts_publisher(message)
+        #self.tts_publisher(message)
 
         time.sleep(1.5)
 
@@ -182,7 +182,7 @@ class PictureTaker:
 
             else:
                 i -= 1
-                self.tts_publisher("Again", "image has too many or too few people")
+                #self.tts_publisher("Again", "image has too many or too few people")
 
             self.feedback.pics_taken.data = i + 1
             self.feedback.image.data = self.msg_rgbImg.data

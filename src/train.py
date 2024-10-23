@@ -17,6 +17,7 @@ import sys
 import actionlib
 import utbots_actions.msg
 import base64
+import time
 
 
 class Trainer:
@@ -34,6 +35,9 @@ class Trainer:
         # Publishers
         self.pub_speech = rospy.Publisher("/robot_speech", String, queue_size=1)
 
+        # Subscibers
+        self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
+
         # ROS node
         rospy.init_node('face_recognizer_trainer', anonymous=True)
         
@@ -48,6 +52,8 @@ class Trainer:
         self.face_encodings = []
         self.n_neighbors = n
 
+        self.done_talking = String("yes")
+
         self.goal = utbots_actions.msg.trainGoal()
         self.result = utbots_actions.msg.trainResult()
         self.feedback = utbots_actions.msg.trainFeedback()
@@ -57,6 +63,9 @@ class Trainer:
         self._as.start()
 
         self.mainLoop()
+
+    def callback_doneTalking(self, msg):
+        self.done_talking = msg
 
     def train_action(self, goal):
 
@@ -69,7 +78,7 @@ class Trainer:
         process = subprocess.Popen([sys.executable, script_name, self.train_dir, self.model_save_path])
 
         rospy.loginfo('[TRAIN] Training the model')
-        
+        self.pub_speech.publish("Training with new faces")
 
         while process.poll() is None:
             if self._as.is_preempt_requested():
@@ -106,6 +115,11 @@ class Trainer:
         self.result.model.data = encoded_model
 
         self.result.success.data = True
+
+        self.pub_speech.publish("Training complete")
+        time.sleep(0.2)
+        while(self.done_talking.data == "no"):
+            pass
 
         self._as.set_succeeded(self.result)
 
