@@ -27,7 +27,7 @@ class PictureTaker:
         self.bridge = CvBridge()
 
         # Publisher
-        self.pub_instructions = rospy.Publisher("/robot_speech", String, queue_size=1)
+        self.pub_instructions = rospy.Publisher("/utbots/voice/tts/robot_speech", String, queue_size=1)
 
         # Subscribers
 

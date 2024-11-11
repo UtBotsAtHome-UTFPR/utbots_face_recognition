@@ -33,7 +33,7 @@ class Trainer:
         self.bridge = CvBridge()
 
         # Publishers
-        self.pub_speech = rospy.Publisher("/robot_speech", String, queue_size=1)
+        self.pub_speech = rospy.Publisher("/utbots/voice/tts/robot_speech", String, queue_size=1)
 
         # Subscibers
         self.sub_is_done_talking = rospy.Subscriber("/is_robot_done_talking", String, self.callback_doneTalking)
