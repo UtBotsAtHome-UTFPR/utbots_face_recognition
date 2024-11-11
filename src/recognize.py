@@ -189,9 +189,8 @@ class Recognize_Action(object):
 
         # Calculates which person is more similar to each face
         closest_distances = self.knn_clf.kneighbors(self.face_encodings, n_neighbors=1)
-        are_matches = [closest_distances[0][i][0] <= 0.6 for i in range(len(self.face_locations))]
-  
-        
+        are_matches = [closest_distances[0][i][0] <= 0.2 for i in range(len(self.face_locations))]
+
 
         rospy.loginfo("[RECOGNIZE] Recognized people are: ")
         # Adds each person in the image to recognized_people and alters img to show them

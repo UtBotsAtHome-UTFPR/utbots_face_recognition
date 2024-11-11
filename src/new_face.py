@@ -155,7 +155,7 @@ class PictureTaker:
 
         #self.tts_publisher(message)
 
-        time.sleep(1.5)
+        time.sleep(0.5)
 
     def picture_taker(self, path):
         
