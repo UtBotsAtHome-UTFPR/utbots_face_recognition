@@ -3,19 +3,12 @@ from rclpy.node import Node
 from rclpy.action import ActionServer
 
 from std_msgs.msg import String
-from utbots_actions.action import Recognition
 
 from sensor_msgs.msg import Image, RegionOfInterest
-from utbots_msgs.msg import Object, ObjectArray
-from utbots_msgs.msg import BoundingBox, BoundingBoxes
 
-import os
-import pickle
 from cv_bridge import CvBridge
-import cv2
-import copy
-import face_recognition
-import base64
+
+from utbots_actions.action import NewFace, Recognition, Train
 
 class Recognize_action(Node):
 
