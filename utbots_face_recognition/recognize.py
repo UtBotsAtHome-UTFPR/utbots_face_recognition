@@ -2,43 +2,85 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionServer
 
+import rclpy.task
+import rclpy.wait_for_message
+from rclpy.callback_groups import ReentrantCallbackGroup
+
 from std_msgs.msg import String
 
 from sensor_msgs.msg import Image, RegionOfInterest
+from rclpy.task import Future
 
 from cv_bridge import CvBridge
 
 from utbots_actions.action import NewFace, Recognition, Train
+from utbots_face_recognition.modules.new_face import PictureTaker
 
-class Recognize_action(Node):
+from action_tutorials_interfaces.action import Fibonacci
+
+class RecognizeAction(Node):
 
     def __init__(self):
-        super().__init__('minimal_publisher')
-        self.publisher_ = self.create_publisher(String, 'topic', 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.i = 0
+        super().__init__('Recognition')
 
-    def timer_callback(self):
-        msg = String()
-        msg.data = 'Hello World: %d' % self.i
-        self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
-        self.i += 1
+        self.bridge = CvBridge()
+
+        self.new_face = ActionServer(
+            self,
+            NewFace,
+            'new_face',
+            self.new_face_cb)
+        
+        self.new_face = PictureTaker()
+
+    def new_face_cb(self, goal_handle):
+        self.get_logger().info('Executing New Face goal...')
+
+        goal = goal_handle.request
+        
+        n_pics = goal.n_pictures
+        name = goal.name + "/"
+
+        path = self.new_face.picture_path_maker(name)
+        try:
+            for i in range(len(n_pics)):
+                
+                if goal_handle.is_cancel_requested:
+                    self.get_logger().info('Goal preempted (canceled).')
+                    goal_handle.canceled()
+                    return NewFace.Result()
+
+                # Ler imagem do tópico do usb_cam e converter para cv_img com cv_bridge
+                img = rclpy.wait_for_message(
+                    Image,
+                    self,
+                    '/image_raw',
+                    timeout=2,
+                    callback_group=ReentrantCallbackGroup()
+                )
+
+                cv_image = self.bridge.imgmsg_to_cv2(img, desired_encoding='bgr8')
+
+                img = self.new_face.crop_img(cv_image)
+                self.new_face.save_img(path + name + str(i), img)
+
+        except TimeoutError:
+
+            self.get_logger().error('Timeout waiting for image.')
+            goal_handle.abort()
+            return NewFace.Result()
+
+        result = NewFace.Result()
+        goal_handle.succeed()
+        return result
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    minimal_publisher = Recognize_action()
+    recognize_action = RecognizeAction()
 
-    rclpy.spin(minimal_publisher)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    minimal_publisher.destroy_node()
-    rclpy.shutdown()
+    rclpy.spin(recognize_action)
 
 
 if __name__ == '__main__':
