@@ -1,22 +1,20 @@
 import rclpy
+from rclpy.action import ActionServer
+from rclpy.node import Node
+
+from action_tutorials_interfaces.action import Fibonacci
+import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionServer
 
-import rclpy.task
-import rclpy.wait_for_message
-from rclpy.callback_groups import ReentrantCallbackGroup
-
-from std_msgs.msg import String
-
 from sensor_msgs.msg import Image, RegionOfInterest
 from rclpy.task import Future
-
 from cv_bridge import CvBridge
-
+from rclpy import wait_for_message
 from utbots_actions.action import NewFace, Recognition, Train
 from utbots_face_recognition.modules.new_face import PictureTaker
+from rclpy.callback_groups import ReentrantCallbackGroup
 
-from action_tutorials_interfaces.action import Fibonacci
 
 class RecognizeAction(Node):
 
@@ -51,7 +49,7 @@ class RecognizeAction(Node):
                     return NewFace.Result()
 
                 # Ler imagem do tópico do usb_cam e converter para cv_img com cv_bridge
-                img = rclpy.wait_for_message(
+                img = wait_for_message(
                     Image,
                     self,
                     '/image_raw',
@@ -78,9 +76,9 @@ class RecognizeAction(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    recognize_action = RecognizeAction()
+    fibonacci_action_server = FibonacciActionServer()
 
-    rclpy.spin(recognize_action)
+    rclpy.spin(fibonacci_action_server)
 
 
 if __name__ == '__main__':
