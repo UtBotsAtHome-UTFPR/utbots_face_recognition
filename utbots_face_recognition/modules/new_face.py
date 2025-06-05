@@ -23,7 +23,7 @@ class PictureTaker:
         - **path**: str
         """
 
-        path = os.path.realpath(os.path.dirname(__file__)).rstrip("/src") + "/faces/" + name + "/"
+        path = os.path.realpath(os.path.dirname(__file__)) + "/faces/" + name + "/"
 
         # Check whether the specified path exists or not
         if not os.path.exists(path):    
@@ -41,36 +41,30 @@ class PictureTaker:
         ## Return
         - **cropped_img**  ||  **None**
         """
-        try:
-            detection = DeepFace.analyze(img_path=img, actions=['emotion'], enforce_detection=True)
-        except:
-            # If there are no faces return None
+
+        backends = [
+            'opencv', 'ssd', 'dlib', 'mtcnn', 'fastmtcnn',
+            'retinaface', 'mediapipe', 'yolov8', 'yolov11s',
+            'yolov11n', 'yolov11m', 'yunet', 'centerface',
+        ]
+        detector = backends[3] # Utilizar um desses no lugar de chamar o modelo de análise é melhor
+        align = True # Melhora 6% o reconhecimento (aparentemente)
+
+        face_objs = DeepFace.extract_faces(img_path = img, detector_backend = detector, align = align, enforce_detection=False)
+
+        if len(face_objs) != 1:
             return None
 
-        # If only one face is found, make it a list
-        if len(detection) != 1:
-            return None
-        # Step 2: Loop through detected faces
+        area = face_objs[0]["facial_area"]
 
-        region = detection[0]["region"]
-        x, y, w, h = region["x"], region["y"], region["w"], region["h"]
-        
-        # Step 3: Crop face from image
+        x = area["x"]
+        y = area["y"]
+        h = area["h"]
+        w = area["w"]
+
         face_img = img[y:y+h, x:x+w]
 
-        # Optional: save cropped face (can help debug)
-        #cv2.imwrite("face_.jpg", face_img)
         return face_img
-
-        '''face_bounding_boxes = face_recognition.face_locations(img = img, model='knn')
-
-        if len(face_bounding_boxes) == 1:
-            color_adjusted_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-            # Crop images to be only faces
-            return color_adjusted_image[face_bounding_boxes[0][0]:face_bounding_boxes[0][2], face_bounding_boxes[0][3]:face_bounding_boxes[0][1]]
-        
-        return False'''
     
     def save_img(self, path, img):
 
@@ -82,7 +76,7 @@ if __name__ == "__main__":
     img = cv2.imread('person.jpeg')
 
     img = program.crop_img(img)
-    print(img)
+    #print(img)
     path = program.picture_path_maker("Operator")
     
     program.save_img(path + "Operator", img)

@@ -6,8 +6,8 @@ import pickle
 from cv_bridge import CvBridge
 import cv2
 import copy
-import face_recognition
 import base64
+from deepface import DeepFace
 
 class Recognize_Action():
     """
@@ -32,7 +32,7 @@ class Recognize_Action():
         # Algorithm variables
         self.face_encodings = []
 
-        self.load_train_data()
+        #self.load_train_data()
 
 
     def recognize(self, img:cv2.typing.MatLike, model: str=False, expected_faces: int=0):
@@ -57,34 +57,51 @@ class Recognize_Action():
         If expected faces is correct or 0 returns the marked image + list of bounding boxes where each bounding box is a map
         
         '''
+        path = path = os.path.realpath(os.path.dirname(__file__)) + "/faces/"
+        model_name = "Facenet512"
+        distance_metric = "cosine"
+        detector_backend = "mtcnn"
 
-        if model:
-            decoded_model = base64.b64decode(model)
-            self.knn_clf = pickle.loads(decoded_model)
-        else:
-            self.load_train_data()
+        try:
+            results_df = DeepFace.find(
+                img_path=img,
+                db_path=path,
+                model_name=model_name,
+                distance_metric=distance_metric,
+                detector_backend=detector_backend,
+                enforce_detection=True,
+                align=True,
+                silent=True
+            )
 
-        self.draw_img = img.copy()
+            if isinstance(results_df, list) and len(results_df) > 0 and not results_df[0].empty:
+                top_match = results_df[0].iloc[0]
+                #print(top_match)
+                identity = top_match['identity']
+                distance = top_match['distance']
+                
+                # Also extract face coordinates
+                face_objs = DeepFace.extract_faces(img_path=img, detector_backend=detector_backend, align=True)
+                if face_objs:
+                    facial_area = face_objs[0]['facial_area']
+                else:
+                    facial_area = None
 
-        print("[RECOGNIZE] Recognizing image")
+                return {
+                    'identity': identity,
+                    'distance': distance,
+                    'facial_area': facial_area
+                }
+            else:
+                return {
+                    'identity': None,
+                    'distance': None,
+                    'facial_area': None
+                }
 
-        img, bbox = self.recognize_img(img)
-
-        detect_count = sum(1 for name in bbox if name["id"] != "Unknown")
-
-        if (detect_count != 0 and expected_faces == 0) or (detect_count == expected_faces and detect_count != 0): 
-            return img, bbox
-        
-        else:
-            print("[RECOGNIZE] Wrong number of faces detected in image")
-
-
-    def load_train_data(self):
-
-        file_directory = os.path.realpath(os.path.dirname(__file__)) + "/../models/model.clf"
-
-        with open(file_directory, 'rb') as f:
-            self.knn_clf = pickle.load(f)
+        except Exception as e:
+            print(f"Recognition failed: {e}")
+            return None
 
 
     def draw_rec_on_faces(self, img, name, coordinates):
@@ -141,7 +158,7 @@ class Recognize_Action():
         return bbox
 
 
-    def recognize_img(self, img):
+    '''def recognize_img(self, img):
 
         self.face_locations = face_recognition.face_locations(img)
         self.face_encodings = face_recognition.face_encodings(img, self.face_locations)
@@ -160,7 +177,7 @@ class Recognize_Action():
         for i in range(len(are_matches)):
             bbox.append(self.person_setter(i, are_matches[i]))
 
-        return self.draw_img, bbox
+        return self.draw_img, bbox'''
 
 
 if __name__ == '__main__':
@@ -168,9 +185,16 @@ if __name__ == '__main__':
 
     
 
-    image_path = 'pic.jpeg'
+    image_path = 'person.jpeg'
     image = cv2.imread(image_path)
 
-    img, _ = classifier.recognize(image)
-
-    cv2.imwrite("recognized.jpeg", img)
+    result = classifier.recognize(image)
+    if result and result['identity']:
+        print("Match found:")
+        print("Identity:", result['identity'])
+        print("  Distance:", result['distance'])
+    else:
+        print("  No match found.")
+    print("  Face coordinates:", result['facial_area'])
+    
+    #cv2.imwrite("recognized.jpeg", img)
