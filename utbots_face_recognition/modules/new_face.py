@@ -78,5 +78,6 @@ if __name__ == "__main__":
     img = program.crop_img(img)
     #print(img)
     path = program.picture_path_maker("Operator")
+    print(path)
     
     program.save_img(path + "Operator", img)

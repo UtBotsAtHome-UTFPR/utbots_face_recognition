@@ -1,9 +1,6 @@
 #!/usr/bin/venv_utbots_face_recognition/bin/python
-from std_msgs.msg import String
-
 import os
 import pickle
-from cv_bridge import CvBridge
 import cv2
 import copy
 import base64
@@ -24,7 +21,6 @@ class Recognize_Action():
         
         # OpenCV
         self.cv_img = None
-        self.bridge = CvBridge()
 
         # Flags
         self.new_rgbImg = False
@@ -57,52 +53,77 @@ class Recognize_Action():
         If expected faces is correct or 0 returns the marked image + list of bounding boxes where each bounding box is a map
         
         '''
+
+        backends = [
+            'opencv', 'ssd', 'dlib', 'mtcnn', 'fastmtcnn',
+            'retinaface', 'mediapipe', 'yolov8', 'yolov11s',
+            'yolov11n', 'yolov11m', 'yunet', 'centerface',
+        ]
+        detector = backends[3] # Utilizar um desses no lugar de chamar o modelo de análise é melhor
+        align = True # Melhora 6% o reconhecimento (aparentemente)
+
+        face_objs = DeepFace.extract_faces(img_path = img, detector_backend = detector, align = align, enforce_detection=False)
+
+        if len(face_objs) == 0:
+            print("No faces were found in this image")
+            return None
+        
         path = path = os.path.realpath(os.path.dirname(__file__)) + "/faces/"
         model_name = "Facenet512"
         distance_metric = "cosine"
-        detector_backend = "mtcnn"
 
-        try:
+        people = []
+        for i in face_objs:
+            area = i["facial_area"]
+
+            x = area["x"]
+            y = area["y"]
+            h = area["h"]
+            w = area["w"]
+            
+            
+            face_img = img[y:y+h, x:x+w]
+            #cv2.imshow("img", face_img)
+
             results_df = DeepFace.find(
-                img_path=img,
+                img_path=face_img,
                 db_path=path,
                 model_name=model_name,
                 distance_metric=distance_metric,
-                detector_backend=detector_backend,
+                detector_backend="skip", # Estamos passando imagens já cropadas e alinhadas
                 enforce_detection=True,
-                align=True,
+                align=False,
                 silent=True
             )
 
             if isinstance(results_df, list) and len(results_df) > 0 and not results_df[0].empty:
                 top_match = results_df[0].iloc[0]
-                #print(top_match)
-                identity = top_match['identity']
+
                 distance = top_match['distance']
-                
+                identity = top_match['identity']
+
+                directory = os.path.dirname(identity)
+                identity = os.path.basename(directory)
+
                 # Also extract face coordinates
-                face_objs = DeepFace.extract_faces(img_path=img, detector_backend=detector_backend, align=True)
+                face_objs = DeepFace.extract_faces(img_path=img, detector_backend="skip", align=True)
                 if face_objs:
-                    facial_area = face_objs[0]['facial_area']
+                    facial_area = area
                 else:
                     facial_area = None
 
-                return {
+                people.append({
                     'identity': identity,
                     'distance': distance,
-                    'facial_area': facial_area
-                }
+                    'facial_area': area
+                })
             else:
-                return {
-                    'identity': None,
+                people.append({
+                    'identity': "Unknown",
                     'distance': None,
-                    'facial_area': None
-                }
-
-        except Exception as e:
-            print(f"Recognition failed: {e}")
-            return None
-
+                    'facial_area': area
+                })
+        return people
 
     def draw_rec_on_faces(self, img, name, coordinates):
 
@@ -120,9 +141,6 @@ class Recognize_Action():
         cv2.putText(img, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
         
         return img
-        #pub_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), encoding="passthrough")
-        #self.pub_marked_imgs.publish(pub_img)
-
 
 
     def person_setter(self, i, is_match):
@@ -189,12 +207,9 @@ if __name__ == '__main__':
     image = cv2.imread(image_path)
 
     result = classifier.recognize(image)
-    if result and result['identity']:
-        print("Match found:")
-        print("Identity:", result['identity'])
-        print("  Distance:", result['distance'])
-    else:
-        print("  No match found.")
-    print("  Face coordinates:", result['facial_area'])
+    print(result)
+
+    for person in result:
+        classifier.draw_rec_on_faces()
     
     #cv2.imwrite("recognized.jpeg", img)
