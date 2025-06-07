@@ -120,83 +120,29 @@ class Recognize_Action():
                 })
         return people
 
-    def draw_rec_on_faces(self, img, name, coordinates):
+    # SÓ FUNCIONA QUANDO PEOPLE ESTÁ ORGANIZADO SEGUNDO UTBOTS/MSG/BOUNDINGBOX[]
+    def draw_rec_on_faces(self, img, people):
 
-        top = coordinates[0]
-        bottom = coordinates[1]
-        left = coordinates[2]
-        right = coordinates[3]
+        for person in people:
+            top = person.ymin
+            bottom = person.ymax
+            left = person.xmin
+            right = person.xmax
+            name = person.id
 
-        # Draw a box around the face
-        cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
+            # Draw a box around the face
+            cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), 2)
 
-        # Draw a label with a name below the face
-        cv2.rectangle(img, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-        font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(img, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-        
+            # Draw a label with a name below the face
+            cv2.rectangle(img, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+            font = cv2.FONT_HERSHEY_DUPLEX
+            cv2.putText(img, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+
         return img
-
-
-    def person_setter(self, i, is_match):
-        ''' 
-        Header header
-        float64 probability
-        int64 xmin
-        int64 ymin
-        int64 xmax
-        int64 ymax
-        string id
-        string Class'''
-
-
-        # Face locations saves the positions as: top, right, bottom, left
-        bbox = {}
-        
-        bbox["xmin"] = self.face_locations[i][3]
-        bbox["xmax"] = self.face_locations[i][1]
-        bbox["ymin"] = self.face_locations[i][0]
-        bbox["ymax"] = self.face_locations[i][2]
-
-        bbox["Class"] = 'Person'
-        bbox["id"] = self.knn_clf.predict(self.face_encodings)[i] if is_match else "Unknown"
-
-        # Coordinates of the face in top, bottom, left, right order
-        coordinates = [bbox["ymin"], bbox["ymax"], bbox["xmin"], bbox["xmax"]]
-
-        self.draw_img = self.draw_rec_on_faces(self.draw_img, bbox["id"], coordinates)
-
-        print("[RECOGNIZE] " + bbox["id"])
-        
-        return bbox
-
-
-    '''def recognize_img(self, img):
-
-        self.face_locations = face_recognition.face_locations(img)
-        self.face_encodings = face_recognition.face_encodings(img, self.face_locations)
-
-        if len(self.face_locations) == 0:
-            return 
-
-        # Calculates which person is more similar to each face
-        closest_distances = self.knn_clf.kneighbors(self.face_encodings, n_neighbors=1)
-
-        are_matches = [closest_distances[0][i][0] <= 0.3 for i in range(len(self.face_locations))] # Ver se da pra voltar pra 0.2 com várias fotos
-
-        print("[RECOGNIZE] Recognized people are: ")
-        # Adds each person in the image to recognized_people and alters img to show them
-        bbox = []
-        for i in range(len(are_matches)):
-            bbox.append(self.person_setter(i, are_matches[i]))
-
-        return self.draw_img, bbox'''
 
 
 if __name__ == '__main__':
     classifier = Recognize_Action()
-
-    
 
     image_path = 'person.jpeg'
     image = cv2.imread(image_path)

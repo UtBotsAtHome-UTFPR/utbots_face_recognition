@@ -18,6 +18,7 @@ from utbots_msgs.msg import BoundingBox, BoundingBoxes
 from utbots_face_recognition.modules.new_face import PictureTaker
 from utbots_face_recognition.modules.recognize import Recognize_Action
 from rclpy.callback_groups import ReentrantCallbackGroup
+import cv2
 
 import time
 
@@ -111,13 +112,17 @@ class RecognizeAction(Node):
             bbox.ymin = people[i]["facial_area"]["y"]
 
             result.people.append(bbox)
+        
+        marked_img = self.recognition.draw_rec_on_faces(cv_image, result.people)
 
-            # COLOCAR A IMAGEM AQUI TAMBÉM DEPOIS DE ARRUMAR ISSO
-            # result.image.data = IMAGEM MODIFICADA
+        pub_img = self.bridge.cv2_to_imgmsg(marked_img, encoding='bgr8')
 
-        self.get_logger().info(str(result))
+        result.image = pub_img
 
         goal_handle.succeed()
+
+        self.get_logger().info('Recognition succeeded')
+
         return result
     
     def new_face_cb(self, goal_handle):
