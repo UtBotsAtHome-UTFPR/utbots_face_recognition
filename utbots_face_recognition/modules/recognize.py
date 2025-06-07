@@ -28,7 +28,8 @@ class Recognize_Action():
         # Algorithm variables
         self.face_encodings = []
 
-        #self.load_train_data()
+        self.path = os.path.expanduser("~/.faces")
+
 
 
     def recognize(self, img:cv2.typing.MatLike, model: str=False, expected_faces: int=0):
@@ -68,7 +69,6 @@ class Recognize_Action():
             print("No faces were found in this image")
             return None
         
-        path = path = os.path.realpath(os.path.dirname(__file__)) + "/faces/"
         model_name = "Facenet512"
         distance_metric = "cosine"
 
@@ -83,15 +83,14 @@ class Recognize_Action():
             
             
             face_img = img[y:y+h, x:x+w]
-            #cv2.imshow("img", face_img)
 
             results_df = DeepFace.find(
                 img_path=face_img,
-                db_path=path,
+                db_path=self.path,
                 model_name=model_name,
                 distance_metric=distance_metric,
                 detector_backend="skip", # Estamos passando imagens já cropadas e alinhadas
-                enforce_detection=True,
+                enforce_detection=False,
                 align=False,
                 silent=True
             )
@@ -107,10 +106,6 @@ class Recognize_Action():
 
                 # Also extract face coordinates
                 face_objs = DeepFace.extract_faces(img_path=img, detector_backend="skip", align=True)
-                if face_objs:
-                    facial_area = area
-                else:
-                    facial_area = None
 
                 people.append({
                     'identity': identity,
@@ -209,7 +204,7 @@ if __name__ == '__main__':
     result = classifier.recognize(image)
     print(result)
 
-    for person in result:
-        classifier.draw_rec_on_faces()
+    #for person in result:
+    #    classifier.draw_rec_on_faces()
     
     #cv2.imwrite("recognized.jpeg", img)

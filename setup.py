@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'recognize = utbots_face_recognition.recognize:main',
+            'action_tester = utbots_face_recognition.action_tester:main'
         ],
     },
 )
