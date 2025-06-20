@@ -83,7 +83,6 @@ class RecognizeAction(Node):
 
         if goal.image.data:
             img = goal.image.data
-            self.get_logger().info('Executing Recognition')
         else:
             img = self.wait_for_image_message()
 
@@ -102,6 +101,8 @@ class RecognizeAction(Node):
 
         for i in range(len(people)):
             bbox = BoundingBox()
+            
+            #self.get_logger().info(str(people))
 
             bbox.id = people[i]["identity"]
             bbox.category = "Person"
@@ -122,7 +123,7 @@ class RecognizeAction(Node):
         goal_handle.succeed()
 
         self.get_logger().info('Recognition succeeded')
-
+        
         return result
     
     def new_face_cb(self, goal_handle):
