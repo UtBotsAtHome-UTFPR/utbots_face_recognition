@@ -51,9 +51,12 @@ class PictureTaker:
         detector = backends[3] # Utilizar um desses no lugar de chamar o modelo de análise é melhor
         align = True # Melhora 6% o reconhecimento (aparentemente)
 
-        face_objs = DeepFace.extract_faces(img_path = img, detector_backend = detector, align = align, enforce_detection=False)
+        try:
+            face_objs = DeepFace.extract_faces(img_path = img, detector_backend = detector, align = align, enforce_detection=True)
+        except:
+            return None
 
-        if len(face_objs) == 0:
+        if len(face_objs) == 0:# I am pretty sure this will not get called because of the try catch but it's here for safety
             print("0 faces")
             return None
         elif len(face_objs) >= 2:
